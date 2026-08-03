@@ -1,0 +1,23 @@
+# Never commit real secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Generated/temporary files
+webapp/downloads/*.xlsx
+webapp/downloads/*.csv
+
+# Manual backup files created during testing (not needed once Git tracks history)
+*_BACKUP.py
+*_BACKUP_*.py
+
+# OS junk files
+.DS_Store
+Thumbs.db
+
+# Editor folders
+.vscode/
+.idea/
