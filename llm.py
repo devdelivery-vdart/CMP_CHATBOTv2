@@ -30,6 +30,77 @@ Rules:
   modifying statement.
 - Output ONLY the SQL query text. No commentary, no markdown code fences.
 
+RBAC -- "MY"/"OUR" PHRASING (important, real bug fixed here): this
+chatbot is used by people (account managers, recruiters) whose visible
+data is ALREADY restricted to their own scope at the database level,
+invisibly to you -- a separate access-control layer filters every
+query's results down to only that person's candidates before you ever
+see them, using session state you have no access to and no column
+represents. Because of this:
+- Phrases like "my candidates," "my clients," "candidates I manage,"
+  "our candidates," "candidates under me" do NOT correspond to any
+  filterable column, and do NOT mean you should add a WHERE clause for
+  them. Write the query EXACTLY as if the person had asked the same
+  question with the word "my"/"our" simply removed -- e.g. "how many
+  of my candidates are Active vs Inactive" means the exact same query
+  as "how many candidates are Active vs Inactive":
+      SELECT Status, COUNT(*) FROM candidates_masked_scoped GROUP BY Status
+  The row-level restriction to "my"/"our" is already applied
+  automatically and invisibly beneath this query -- you do not need to
+  (and cannot) express it yourself.
+- NEVER invent a placeholder value for something you don't actually
+  know, such as WHERE client = 'YourClientName' or WHERE
+  recruiter_name = 'CurrentUser' -- there is no column representing
+  "the current logged-in person," and fabricating a literal string
+  guess is always wrong. A real, verified bug: "how many of my
+  candidates are Active vs Inactive" was answered with a fabricated
+  WHERE client = 'YourClientName' filter, which matched zero rows and
+  produced a false "you have no candidates" answer -- when the correct
+  query was the exact same query with no client filter at all, which
+  correctly returns real Active/Inactive counts once the (invisible,
+  automatic) row-level restriction is applied underneath it.
+- Only write an actual WHERE filter on client/recruiter_name/bu_head/
+  etc. when the person NAMES a specific one explicitly (e.g. "how many
+  candidates does Accenture have" or "how many candidates does
+  Priya handle") -- "my"/"our" is never itself the name of anything to
+  filter on.
+
+COLUMN SELECTION -- NEVER SELECT *, NEVER OVER-FETCH (important, two
+real bugs fixed here):
+1. NEVER write SELECT * under any circumstance -- always name the
+   specific columns needed to answer the question. A real, verified
+   bug: "list the active candidates" was answered with
+   "SELECT * FROM candidates_masked_scoped WHERE Status = 'Active'",
+   which was rejected outright by the safety layer for using SELECT *
+   -- a completely avoidable failure, since the question only ever
+   needed a few relevant columns, e.g.:
+   SELECT candidate_name, Status, client, recruiter_name
+   FROM candidates_masked_scoped WHERE Status = 'Active'
+2. Only include margin_value, client_rate, client_rate_numeric,
+   client_rate_currency, or client_rate_payment_basis in your SELECT
+   list if the question is EXPLICITLY about margin, profitability, or
+   client billing rate. NEVER include these columns "for completeness"
+   or because a vague question like "list all those" or "show me full
+   details" might conceivably want everything -- these are sensitive,
+   access-restricted columns that many logins cannot view at all, and
+   a query naming them gets REJECTED OUTRIGHT for those logins even
+   when the person never asked about margin/rate at all. A real,
+   verified bug: "list all those" (a vague follow-up to a
+   Status/rolloff conversation, with NOTHING about margin mentioned
+   anywhere) was answered by selecting margin_value and every
+   client_rate_* column alongside the requested candidate details,
+   causing the ENTIRE question to be blocked as a permission violation
+   -- when the correct query needed only candidate_name, Status,
+   end_date, etc., with no rate/margin columns involved at all.
+3. When a follow-up is vague about WHICH columns to show (e.g. "list
+   them", "list all those", "show details"), infer the relevant
+   columns from the CONVERSATION CONTEXT of what was just discussed
+   (e.g. if the prior exchange was about Active/Inactive status, show
+   candidate_name + Status + a couple of identifying columns like
+   client/recruiter_name) -- never default to trying to show every
+   column that exists in the schema just because the request itself is
+   unspecific.
+
 ROUTING: if the question has NOTHING to do with this staffing database
 (the schema above) -- e.g. general knowledge questions like "what type
 of company is Accenture", "what does SOW stand for", "who is the CEO of
@@ -148,30 +219,10 @@ breakdown" (e.g. 193 different recruiters) with "the total count across
 all rows" (e.g. 1,121 total candidates) -- these are different numbers
 and must never be swapped or substituted for each other.
 
-PROACTIVE FOLLOW-UP: when it feels natural, end your answer with one
-short, plain-language question offering to check something related --
-written the same way a helpful analyst would ask out loud, e.g. "Want me
-to also break this down by recruiter?" or "Should I check how many of
-those are Active vs Inactive?". No special formatting or marker needed
--- just write it as a normal closing sentence.
-STRICT RULES for this closing question -- these are not optional:
-- It must describe ONE single, concrete, specific thing that could be
-  answered with exactly ONE simple SQL query -- never offer a vague
-  choice between multiple different things (e.g. NEVER write something
-  like "would you like more details or check something else?" or "want
-  more info or a different breakdown?" -- these are too vague to act on
-  and cause failures if the person just says "yes"). Pick ONE specific
-  angle and name it plainly, e.g. "Want me to break this down by BU
-  instead?" (good) vs. "Want more details or something else?" (bad --
-  too vague, never do this).
-- NEVER state any number, name, or fact in it that you have not already
-  retrieved via the actual query results above -- it must be phrased as
-  a question/offer, never as a statement containing a number or answer.
-- Only offer something genuinely answerable from this database's known
-  columns (recruiters, clients, BUs, dates, rates, skills, status) --
-  never suggest something the schema can't actually answer.
-- Skip it entirely for narrow, single-fact questions where no natural
-  follow-up applies (e.g. a simple total doesn't always need one)."""
+Do NOT end your answer with a follow-up question or offer to check
+something else -- follow-up suggestions are now handled separately, as
+structured clickable options (see followup_suggester.py), not as a
+sentence you write. Simply answer the question and stop."""
 
 
 def _clean_sql_text(text: str) -> str:
@@ -280,15 +331,15 @@ def generate_sql(question: str, history=None):
 
 def _extract_followup_suggestion(answer_text: str):
     """
-    Now a pass-through: the model writes any follow-up question as a
-    normal closing sentence directly in the answer (see
-    ANSWER_SYSTEM_PROMPT), so there's nothing to parse out anymore --
-    real conversation history (see generate_sql's `history` param) is
-    what lets a plain reply like "Yes" resolve correctly now, rather
-    than needing a separately-rendered clickable suggestion.
-    Kept as a function (returning suggestion=None always) so
-    phrase_answer's call site and server.py's response shape don't need
-    to change if this evolves again later.
+    Pass-through: follow-up suggestions are no longer written into the
+    answer text at all (see ANSWER_SYSTEM_PROMPT -- that instruction
+    was removed once followup_suggester.py became the real
+    implementation) and are no longer parsed out of anything here
+    either. Real suggestions are computed deterministically in
+    webapp/server.py via followup_suggester.build_followups(), using
+    the login's scope_type -- something this function has no access to
+    and shouldn't need. Kept as a no-op so phrase_answer's call site
+    doesn't need to change shape again if this evolves further.
     """
     return answer_text.rstrip(), None
 
@@ -699,119 +750,112 @@ You will be given an original question the person asked, and a set of
 sub-questions that were each answered with REAL, verified data retrieved
 from the database (shown as sub-question + actual result rows).
 
-Write your response in two clearly separated parts:
+Write a short synthesis of what the actual retrieved numbers show,
+directly relevant to the original question. EVERY number or fact you
+state MUST come from the provided sub-question results -- never state
+a number that isn't in them. If the retrieved data is incomplete or
+doesn't fully cover the question, say so honestly rather than filling
+gaps with guesses. Use a Markdown table if presenting a breakdown with
+2+ columns (same formatting rules as any other data answer).
 
-1. **Findings from your data** -- a short synthesis of what the actual
-   retrieved numbers show, directly relevant to the original question.
-   EVERY number or fact you state here MUST come from the provided
-   sub-question results -- never state a number that isn't in them.
-   If the retrieved data is incomplete or doesn't fully cover the
-   question, say so honestly rather than filling gaps with guesses.
-   Use a Markdown table if presenting a breakdown with 2+ columns
-   (same formatting rules as any other data answer).
+Do NOT include general staffing-industry advice, best-practice
+suggestions, or recommendations of any kind -- answer ONLY with what
+the retrieved data shows, and stop there. Stay strictly on the data in
+front of you; do not editorialize or advise beyond it.
 
-   CRITICAL -- ENTITY NAME ACCURACY: if conversation history is
-   provided and it discussed a DIFFERENT client/recruiter/BU than the
-   one this question is actually about, do NOT let that earlier name
-   bleed into your findings. Always name the SAME client/entity that
-   the CURRENT original question and CURRENT sub-question results are
-   actually about -- double check the entity name in your opening
-   sentence matches the one in the question, not one from earlier in
-   the conversation. A real, verified example of this exact bug: a
-   synthesis about LTIMindtree incorrectly opened with "HCL has 223
-   candidates with LTIMindtree" -- mixing in a client name (HCL) from
-   a few turns earlier in the conversation. Never do this -- name only
-   the entity the current question and data are actually about.
+CRITICAL -- ENTITY NAME ACCURACY: if conversation history is
+provided and it discussed a DIFFERENT client/recruiter/BU than the
+one this question is actually about, do NOT let that earlier name
+bleed into your findings. Always name the SAME client/entity that
+the CURRENT original question and CURRENT sub-question results are
+actually about -- double check the entity name in your opening
+sentence matches the one in the question, not one from earlier in
+the conversation. A real, verified example of this exact bug: a
+synthesis about LTIMindtree incorrectly opened with "HCL has 223
+candidates with LTIMindtree" -- mixing in a client name (HCL) from
+a few turns earlier in the conversation. Never do this -- name only
+the entity the current question and data are actually about.
 
-   CRITICAL -- NO NUMBER BLEEDING FROM HISTORY EITHER: this same rule
-   applies to NUMBERS, not just names. Every single number you state
-   must come from the CURRENT sub-question results provided to you in
-   THIS call -- never reuse or reference a number from an earlier
-   question/answer in the conversation history, even if it seems
-   topically related or similar. A real, verified example of this
-   bug: a synthesis about pay rates by region stated an average pay
-   rate of "2250000.00" that was not present anywhere in the current
-   result set at all -- it had been discussed many turns earlier in
-   the conversation for a completely different question, and
-   incorrectly resurfaced here as if it were part of the current
-   findings. Treat conversation history as useful ONLY for
-   understanding entities/context/intent -- NEVER as a source of
-   numbers to restate in a new answer.
+CRITICAL -- NO NUMBER BLEEDING FROM HISTORY EITHER: this same rule
+applies to NUMBERS, not just names. Every single number you state
+must come from the CURRENT sub-question results provided to you in
+THIS call -- never reuse or reference a number from an earlier
+question/answer in the conversation history, even if it seems
+topically related or similar. A real, verified example of this
+bug: a synthesis about pay rates by region stated an average pay
+rate of "2250000.00" that was not present anywhere in the current
+result set at all -- it had been discussed many turns earlier in
+the conversation for a completely different question, and
+incorrectly resurfaced here as if it were part of the current
+findings. Treat conversation history as useful ONLY for
+understanding entities/context/intent -- NEVER as a source of
+numbers to restate in a new answer.
 
-   RECRUITER/NAME DATA QUALITY: if a recruiter breakdown includes
-   known non-recruiter process codes (e.g. 'PT', 'PTR', 'TBD', 'NA',
-   'Vendor Change') as if they were real people, especially if one of
-   them has a notably high count, explicitly call this out as a data
-   quality caveat (e.g. "note: a large share of this is tagged under
-   the process code 'PTR' rather than an actual recruiter, which may
-   need investigating before drawing conclusions about individual
-   recruiter performance") rather than silently presenting it in the
-   table as if it were an ordinary recruiter.
+RECRUITER/NAME DATA QUALITY: if a recruiter breakdown includes
+known non-recruiter process codes (e.g. 'PT', 'PTR', 'TBD', 'NA',
+'Vendor Change') as if they were real people, especially if one of
+them has a notably high count, explicitly call this out as a data
+quality caveat (e.g. "note: a large share of this is tagged under
+the process code 'PTR' rather than an actual recruiter, which may
+need investigating before drawing conclusions about individual
+recruiter performance") rather than silently presenting it in the
+table as if it were an ordinary recruiter.
 
-   CRITICAL -- NO SELF-CALCULATED NUMBERS OF ANY KIND: do not calculate
-   ANY number yourself from the raw data you were given -- this
-   includes not just percentages/ratios/averages, but also overall
-   totals or summary counts (e.g. do NOT write an opening sentence like
-   "there are a total of 36 X" by mentally adding up rows from a
-   breakdown table). You are unreliable at this kind of mental
-   arithmetic and it produces wrong numbers that look confident -- a
-   real, verified example of this exact bug: a synthesis stated "a
-   total of 36" for something a direct query later confirmed was
-   actually 45. A second real example: a synthesis stated a
-   company-wide rate of 0.7058 when the true value (computable from the
-   provided raw counts) was 0.3167 -- more than double the truth.
-   Only state ANY summary/total number if it EXACTLY matches a single
-   value that was ALREADY computed and returned directly by one of the
-   sub-question SQL results (i.e. you can see that literal number
-   sitting in the data, not derived by summing rows yourself). If you
-   want to state an overall total and no sub-question result already
-   contains one, either omit that summary sentence entirely and just
-   present the breakdown table, or explicitly say a specific follow-up
-   query could calculate the precise total -- never estimate or add it
-   up yourself.
+CRITICAL -- NO SELF-CALCULATED NUMBERS OF ANY KIND: do not calculate
+ANY number yourself from the raw data you were given -- this
+includes not just percentages/ratios/averages, but also overall
+totals or summary counts (e.g. do NOT write an opening sentence like
+"there are a total of 36 X" by mentally adding up rows from a
+breakdown table). You are unreliable at this kind of mental
+arithmetic and it produces wrong numbers that look confident -- a
+real, verified example of this exact bug: a synthesis stated "a
+total of 36" for something a direct query later confirmed was
+actually 45. A second real example: a synthesis stated a
+company-wide rate of 0.7058 when the true value (computable from the
+provided raw counts) was 0.3167 -- more than double the truth.
+Only state ANY summary/total number if it EXACTLY matches a single
+value that was ALREADY computed and returned directly by one of the
+sub-question SQL results (i.e. you can see that literal number
+sitting in the data, not derived by summing rows yourself). If you
+want to state an overall total and no sub-question result already
+contains one, either omit that summary sentence entirely and just
+present the breakdown table, or explicitly say a specific follow-up
+query could calculate the precise total -- never estimate or add it
+up yourself.
 
-   NARROW EXCEPTION -- simple, auditable single division ONLY: if the
-   sub-question results give you exactly two raw numbers that form one
-   obvious ratio (e.g. "15 unexpected rolloffs" and "41 total
-   candidates" for the same entity), you MAY compute and state that one
-   single division (15 / 41 = 36.6%) -- but you MUST show both raw
-   input numbers explicitly in the same sentence as the computed
-   percentage (e.g. "15 of Cognizant's 41 candidates (about 36.6%) had
-   unexpected rolloffs"), never state a bare percentage with its inputs
-   hidden. Never chain more than one arithmetic operation together
-   (e.g. never compute a rate AND THEN compare two rates to each other
-   in your head -- if you need to compare an entity's rate to a
-   company-wide rate, state each rate separately with its own two
-   visible input numbers, and let the reader compare them, rather than
-   computing a comparison ratio yourself).
+NARROW EXCEPTION -- simple, auditable single division ONLY: if the
+sub-question results give you exactly two raw numbers that form one
+obvious ratio (e.g. "15 unexpected rolloffs" and "41 total
+candidates" for the same entity), you MAY compute and state that one
+single division (15 / 41 = 36.6%) -- but you MUST show both raw
+input numbers explicitly in the same sentence as the computed
+percentage (e.g. "15 of Cognizant's 41 candidates (about 36.6%) had
+unexpected rolloffs"), never state a bare percentage with its inputs
+hidden. Never chain more than one arithmetic operation together
+(e.g. never compute a rate AND THEN compare two rates to each other
+in your head -- if you need to compare an entity's rate to a
+company-wide rate, state each rate separately with its own two
+visible input numbers, and let the reader compare them, rather than
+computing a comparison ratio yourself).
 
-   CRITICAL -- CROSS-CHECK A TOTAL AGAINST ITS OWN BREAKDOWN: if one
-   sub-question result gives you a single overall total (e.g. "88
-   unexpected rolloffs") AND another sub-question result gives you a
-   breakdown of that SAME metric (e.g. by recruiter), you MUST verify
-   the breakdown's rows actually sum to the stated total before
-   presenting both together. If they do NOT match (a real, verified
-   case: a breakdown summed to 84 while the stated total was 88), do
-   NOT silently present both numbers side by side as if they agree --
-   explicitly flag the discrepancy in your answer (e.g. "note: the
-   recruiter breakdown below sums to 84, which doesn't match the
-   separately-computed total of 88 -- this may need investigating") so
-   the person is never shown two contradicting numbers without being
-   told they contradict.
+CRITICAL -- CROSS-CHECK A TOTAL AGAINST ITS OWN BREAKDOWN: if one
+sub-question result gives you a single overall total (e.g. "88
+unexpected rolloffs") AND another sub-question result gives you a
+breakdown of that SAME metric (e.g. by recruiter), you MUST verify
+the breakdown's rows actually sum to the stated total before
+presenting both together. If they do NOT match (a real, verified
+case: a breakdown summed to 84 while the stated total was 88), do
+NOT silently present both numbers side by side as if they agree --
+explicitly flag the discrepancy in your answer (e.g. "note: the
+recruiter breakdown below sums to 84, which doesn't match the
+separately-computed total of 88 -- this may need investigating") so
+the person is never shown two contradicting numbers without being
+told they contradict.
 
-2. **General suggestions** (include ONLY if the original question asked
-   for advice, recommendations, or "how to" improve/reduce/fix
-   something) -- clearly labeled as general staffing-industry best
-   practices, e.g. start this section with something like "These are
-   general suggestions, not derived from your specific data:". Use
-   qualified language ("commonly", "consider", "this may help") rather
-   than presenting them as guaranteed fixes. Do not state any specific
-   number in this section unless it was in the findings above.
-
-If the original question did not ask for advice/recommendations, omit
-part 2 entirely -- just give the data findings.
 Keep the tone helpful and concise. Use Markdown formatting (bold, lists,
-tables) per standard formatting rules."""
+tables) per standard formatting rules. Do not add a closing
+recommendations section of any kind -- end once the data findings are
+stated."""
 
 
 def decompose_insight_question(question: str, history=None) -> list[str]:

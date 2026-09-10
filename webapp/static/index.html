@@ -1,494 +1,647 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chatbot</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>VDart Staffing AI</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
 <style>
-  :root{
-    --bg:#FFFFFF;
-    --surface:#F7F7F8;
-    --line:#E4E4E7;
-    --text:#1C1C1F;
-    --text-dim:#6B6B72;
-    --accent:#33415C;
-    --accent-dim:#5C6B85;
-    --ok:#4F8F6D;
-    --err:#B8503F;
-  }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  html,body{height:100%;}
-  body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:'Inter', sans-serif;
-    display:flex;
-    flex-direction:column;
-    min-height:100vh;
-  }
+:root{
+  --blue:#1d73d5; --blue2:#0f5fb8; --blue-soft:#eaf4ff; --ink:#18344d;
+  --muted:#6f8496; --line:#dce7ef; --bg:#f3f7fa; --card:#fff; --good:#2b8a66;
+  --warn:#bf7a1f; --danger:#b94a4a; --shadow:0 18px 50px rgba(30,63,92,.18);
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+button,input,select{font:inherit} button{cursor:pointer}
+.app{min-height:100vh;display:grid;grid-template-columns:232px 1fr}
+.sidebar{background:#fff;border-right:1px solid var(--line);padding:20px 14px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;padding:4px 8px 18px}
+.brandmark{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(145deg,var(--blue),#55a7f0);color:#fff}
+.section-title{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:#91a3b2;padding:18px 11px 7px;font-weight:800}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav button{display:flex;align-items:center;gap:10px;border:0;background:transparent;color:#50697f;padding:10px 11px;border-radius:10px;text-align:left}
+.nav button.active,.nav button:hover{background:#eef6ff;color:var(--blue2);font-weight:700}
+.main{min-width:0}
+.topbar{height:68px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:5}
+.search{display:flex;align-items:center;gap:10px;background:#f7fafc;border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-width:300px;color:#7a8c9a}
+.search input{border:0;background:transparent;outline:0;width:100%}
+.user{display:flex;align-items:center;gap:10px}
+.avatar{width:35px;height:35px;border-radius:50%;background:#d9ebff;display:grid;place-items:center;color:var(--blue2);font-weight:800}
+.content{padding:28px}
+.breadcrumb{color:#8a9aaa;font-size:12px;margin-bottom:10px}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:20px}
+.page-head h1{margin:0;font-size:24px}
+.page-head p{margin:7px 0 0;color:var(--muted);font-size:13px}
+.btn{border:1px solid var(--line);background:#fff;color:#34556f;padding:10px 13px;border-radius:10px;font-weight:700}
+.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.ai{background:#f0f7ff;border-color:#bedbfa;color:#1768bd}
+.btn:disabled{opacity:.45;cursor:default}
+.toolbar,.card{background:#fff;border:1px solid var(--line);border-radius:14px}
+.toolbar{padding:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.field{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fbfdff;color:#60788c}
+.field input,.field select{border:0;outline:0;background:transparent;color:#284760}
+.spacer{flex:1}
+.report-card{overflow:hidden}
+.report-title{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.report-title strong{font-size:15px}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:12px 14px;border-bottom:1px solid #edf2f6;text-align:left;white-space:nowrap}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#7b8d9b;background:#f8fafc}
+tbody tr:hover{background:#f8fbff}
+.status{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;background:#eef6ff;color:#1768bd;font-size:11px;font-weight:800}
+.status.good{background:#eaf8f2;color:#2b8063}
+.status.warn{background:#fff5e8;color:#a96616}
+.selection-bar{display:none;align-items:center;gap:10px;background:#eaf4ff;border:1px solid #bfdcf7;border-radius:12px;padding:10px 12px;margin-bottom:12px}
+.selection-bar.show{display:flex}
+.selection-bar strong{font-size:13px}
+.pagination{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;color:#748898;font-size:12px}
 
-  header{
-    border-bottom:1px solid var(--line);
-    padding:24px 32px 18px;
-    display:flex;
-    align-items:baseline;
-    justify-content:space-between;
-    flex-wrap:wrap;
-    gap:8px;
-  }
-  .brand{
-    font-family:'Inter', sans-serif;
-    font-weight:600;
-    font-size:20px;
-    letter-spacing:-0.01em;
-    color:var(--text);
-  }
-  .subtitle{
-    font-size:12px;
-    color:var(--text-dim);
-  }
+/* AI Launcher */
+.ai-launcher{position:fixed;right:28px;bottom:26px;z-index:30;border:1px solid var(--line);background:#fff;color:var(--blue);border-radius:18px;width:60px;height:60px;box-shadow:0 14px 36px rgba(29,115,213,.20);display:grid;place-items:center;font-size:24px;padding:0;overflow:hidden}
+.ai-launcher-logo{width:48px;height:48px;object-fit:cover;object-position:center}
+.ai-launcher-fallback{font-size:24px;color:var(--blue)}
 
-  main{
-    flex:1;
-    max-width:820px;
-    width:100%;
-    margin:0 auto;
-    padding:28px 24px 140px;
-    display:flex;
-    flex-direction:column;
-    gap:22px;
-  }
+/* Chat */
+.chat{position:fixed;right:28px;bottom:98px;width:min(900px,calc(100vw - 56px));height:calc(100vh - 130px);max-height:calc(100vh - 130px);background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);z-index:28;display:none;overflow:hidden}
+.chat.open{display:flex;flex-direction:column}
+.chat.expanded{width:calc(100vw - 32px);height:calc(100vh - 40px);max-height:calc(100vh - 40px);right:16px;bottom:20px}
+.chat-header{background:linear-gradient(135deg,#126ac7,#278ce5);color:#fff;padding:14px 15px 0}
+.chat-top{display:flex;align-items:center;gap:10px}
+.ai-logo{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);display:grid;place-items:center;font-size:18px}
+.chat-name{font-size:14px;font-weight:800}.chat-sub{font-size:11px;opacity:.82;margin-top:2px}
+.chat-controls{margin-left:auto;display:flex;gap:5px}
+.icon-btn{width:32px;height:32px;border:0;border-radius:9px;background:rgba(255,255,255,.12);color:#fff}
+.chat-tabs{display:flex;gap:4px;margin-top:12px}
+.tab{border:0;background:transparent;color:rgba(255,255,255,.76);padding:9px 12px;border-bottom:2px solid transparent;font-size:12px;font-weight:800}
+.tab.active{color:#fff;border-bottom-color:#fff}
+.chat-body{flex:1;overflow:auto;background:#f7fafc;padding:14px}
+.scope{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:9px 10px;margin-bottom:12px;font-size:11px}
+.scope strong{color:#255474}
+.scope button{border:0;background:transparent;color:var(--blue2);font-size:11px;font-weight:800}
+.panel{display:none}.panel.active{display:block}
+.welcome{background:linear-gradient(145deg,#fff,#f5faff);border:1px solid #d9e8f7;border-radius:15px;padding:14px;margin-bottom:12px}
+.welcome h3{font-size:15px;margin:0 0 6px}.welcome p{font-size:12px;color:var(--muted);margin:0}
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.quick{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;text-align:left;color:#355873}
+.quick strong{display:block;font-size:12px}.quick span{display:block;font-size:10px;color:#8294a3;margin-top:3px}
+.message{max-width:92%;margin:10px 0;font-size:12px;line-height:1.55}
+.message.bot{background:#fff;border:1px solid var(--line);border-radius:13px 13px 13px 5px;padding:10px 11px}
+.message.bot.blocked{border-color:#f2c9c2;background:#fff7f5}
+.message.bot.error{border-color:#f2c9c2;background:#fff7f5}
+.message.user{margin-left:auto;background:var(--blue);color:#fff;border-radius:13px 13px 5px 13px;padding:10px 11px}
+.message p:first-child{margin-top:0}.message p:last-child{margin-bottom:0}
+.message table{margin-top:8px;font-size:11px}
+.message th,.message td{padding:6px 8px}
+.badge-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:10px;padding:6px 8px;border-radius:999px;background:#eef5fb;color:#486b84;border:1px solid #d8e5ef}
+.chip.blocked{background:#fdeceb;color:#a83f31;border-color:#f2c9c2}
+.actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.mini{border:1px solid #cfe0ee;background:#fff;color:#2c5d7d;border-radius:9px;padding:7px 8px;font-size:10px;font-weight:800}
+.mini.primary{background:#eaf4ff;border-color:#c6def7;color:#1768bd}
+.source{margin-top:9px;border-top:1px dashed #d8e5ef;padding-top:8px;color:#71879a;font-size:10px}
+.source details summary{cursor:pointer;color:#436783;font-weight:800}
+.source code{display:block;margin-top:5px;white-space:pre-wrap;word-break:break-word;background:#f7fafc;border:1px solid var(--line);border-radius:6px;padding:6px 7px;font-size:9.5px}
+.insight{border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px;margin-bottom:8px}
+.insight .eyebrow{font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:900;color:var(--blue2)}
+.insight h4{margin:4px 0 5px;font-size:12px}.insight p{margin:0;color:var(--muted);font-size:11px;line-height:1.45}
+.saved-item{display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border:1px solid var(--line);border-radius:11px;margin-bottom:8px}
+.saved-item div{flex:1}.saved-item b{font-size:12px}.saved-item span{display:block;font-size:10px;color:var(--muted);margin-top:2px}
+.chat-compose{background:#fff;border-top:1px solid var(--line);padding:10px}
+.context-row{display:flex;gap:6px;margin-bottom:7px;overflow:auto}
+.context{flex:none;background:#eef6ff;border:1px solid #d1e5fa;color:#1768bd;border-radius:999px;padding:5px 8px;font-size:9px;font-weight:800}
+.compose{display:flex;gap:7px;align-items:center;border:1px solid #cfdce6;border-radius:13px;padding:6px}
+.compose input{flex:1;border:0;outline:0;padding:5px 6px;color:#284760;font-size:12px}
+.plus,.send{width:34px;height:34px;border:0;border-radius:10px}
+.plus{background:#f1f5f8;color:#60788c}.send{background:var(--blue);color:#fff}
+.send:disabled{opacity:.5}
+.disclaimer{text-align:center;color:#9aa8b3;font-size:9px;margin-top:6px}
 
-  .empty-state{
-    margin-top:60px;
-    text-align:center;
-    color:var(--text-dim);
-  }
-  .empty-state .mark{
-    font-family:'Inter', sans-serif;
-    font-weight:600;
-    font-size:18px;
-    color:var(--text);
-    margin-bottom:10px;
-  }
-  .suggestions{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    justify-content:center;
-    margin-top:22px;
-  }
-  .suggestion-chip{
-    border:1px solid var(--line);
-    color:var(--text-dim);
-    background:var(--surface);
-    padding:9px 14px;
-    border-radius:7px;
-    font-size:13px;
-    cursor:pointer;
-    transition:border-color .15s ease, color .15s ease;
-    font-family:'Inter', sans-serif;
-  }
-  .suggestion-chip:hover{
-    border-color:var(--accent-dim);
-    color:var(--text);
-  }
+/* Expanded canvas */
+.expanded-grid{display:block}
+.chat.expanded .expanded-grid{display:flex;align-items:flex-start;gap:12px}
+.chat.expanded .expanded-grid > div:first-child{flex:1.35 1 0;min-width:0}
+.chat.expanded .analysis-side{display:flex;flex-direction:column;gap:8px;flex:0.85 1 0;min-width:0}
+.analysis-side{display:none}
+.side-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}
+.side-card h4{margin:0 0 8px;font-size:12px}
+.report-preview{display:grid;gap:7px}
+.report-line{display:flex;justify-content:space-between;font-size:10px;color:#60788c}
+.report-line b{color:#244d69}
 
-  .row{ display:flex; }
-  .row.user{ justify-content:flex-end; }
-  .row.assistant{ justify-content:flex-start; }
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(14,34,50,.38);display:none;place-items:center;z-index:60;padding:20px}
+.modal.open{display:grid}
+.modal-card{width:min(720px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:var(--shadow)}
+.modal-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.modal-head h3{margin:0;font-size:16px}.modal-body{padding:18px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#8293a0;font-weight:800;margin-bottom:5px}
+.form-control{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fbfdff;color:#2b4d66}
+.preview{margin-top:16px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.preview-head{background:#f7fafc;padding:10px 12px;border-bottom:1px solid var(--line);font-size:11px;font-weight:800}
+.preview-empty{padding:16px;color:#8a9aaa;font-size:12px;text-align:center}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid var(--line)}
 
-  .bubble{
-    max-width:78%;
-    padding:14px 16px;
-    border-radius:10px;
-    font-size:15px;
-    line-height:1.55;
-  }
-  .row.user .bubble{
-    background:var(--surface);
-    border:1px solid var(--line);
-    color:var(--text);
-  }
-  .row.assistant .bubble{
-    background:transparent;
-    border:1px solid var(--line);
-    border-left:2px solid var(--accent);
-    color:var(--text);
-    width:100%;
-    max-width:100%;
-  }
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:#18344d;color:#fff;padding:10px 14px;border-radius:10px;font-size:11px;opacity:0;pointer-events:none;transition:.2s;z-index:90}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-  .query-strip{
-    margin-top:12px;
-    border-top:1px solid var(--line);
-    padding-top:10px;
-    display:flex;
-    align-items:flex-start;
-    gap:9px;
-  }
-  .status-dot{
-    width:7px; height:7px;
-    border-radius:50%;
-    margin-top:5px;
-    flex:none;
-    background:var(--ok);
-  }
-  .status-dot.thinking{
-    background:var(--accent-dim);
-    animation:pulse 1.1s ease-in-out infinite;
-  }
-  .status-dot.error{ background:var(--err); }
-  @keyframes pulse{
-    0%,100%{ opacity:1; }
-    50%{ opacity:.35; }
-  }
-  .query-detail{
-    font-family:'JetBrains Mono', monospace;
-    font-size:12px;
-    color:var(--text-dim);
-    line-height:1.6;
-    word-break:break-word;
-  }
-  .query-detail .provider{
-    color:var(--accent-dim);
-  }
+/* Login gate */
+.login-gate{position:fixed;inset:0;background:rgba(14,34,50,.5);display:none;place-items:center;z-index:100}
+.login-gate.open{display:grid}
+.login-card{width:min(380px,90vw);background:#fff;border-radius:16px;padding:22px;box-shadow:var(--shadow)}
+.login-card h3{margin:0 0 6px;font-size:16px}
+.login-card p{margin:0 0 14px;color:var(--muted);font-size:12px}
+.login-card input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;margin-bottom:10px}
+.login-error{color:var(--danger);font-size:11px;min-height:16px;margin-bottom:4px}
 
-  .download-btn{
-    margin-top:12px;
-    display:inline-flex;
-    align-items:center;
-    gap:7px;
-    background:transparent;
-    border:1px solid var(--accent-dim);
-    color:var(--accent);
-    padding:8px 14px;
-    border-radius:7px;
-    font-size:13px;
-    font-family:'Inter', sans-serif;
-    font-weight:500;
-    cursor:pointer;
-    text-decoration:none;
-    transition:background .15s ease;
-  }
-  .download-btn:hover{
-    background:rgba(51,65,92,0.06);
-  }
-
-  .thinking-text{
-    font-family:'Inter', sans-serif;
-    font-size:15px;
-    line-height:1.55;
-    color:var(--text);
-  }
-  .thinking-text p{ margin:0 0 10px 0; }
-  .thinking-text p:last-child{ margin-bottom:0; }
-  .thinking-text ul, .thinking-text ol{
-    margin:6px 0 10px 0;
-    padding-left:22px;
-  }
-  .thinking-text li{
-    margin:4px 0;
-  }
-  .thinking-text strong{ font-weight:600; }
-  .thinking-text code{
-    background:var(--surface);
-    border:1px solid var(--line);
-    border-radius:4px;
-    padding:1px 5px;
-    font-family:'JetBrains Mono', monospace;
-    font-size:13px;
-  }
-  .thinking-text h1, .thinking-text h2, .thinking-text h3{
-    font-size:15px;
-    font-weight:600;
-    margin:10px 0 6px 0;
-  }
-
-  .thinking-text table{
-    border-collapse:collapse;
-    width:100%;
-    margin:10px 0 12px 0;
-    font-size:14px;
-    display:block;
-    overflow-x:auto;
-    white-space:nowrap;
-  }
-  .thinking-text th{
-    background:var(--surface);
-    color:var(--text);
-    font-weight:600;
-    text-align:left;
-    padding:8px 12px;
-    border:1px solid var(--line);
-    white-space:nowrap;
-  }
-  .thinking-text td{
-    padding:7px 12px;
-    border:1px solid var(--line);
-    color:var(--text);
-  }
-  .thinking-text tbody tr:nth-child(even){
-    background:rgba(0,0,0,0.015);
-  }
-
-  footer{
-    position:fixed;
-    bottom:0; left:0; right:0;
-    background:linear-gradient(to top, var(--bg) 65%, transparent);
-    padding:26px 24px 24px;
-  }
-  .input-shell{
-    max-width:820px;
-    margin:0 auto;
-    display:flex;
-    gap:10px;
-    background:var(--surface);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:6px 6px 6px 16px;
-    align-items:center;
-  }
-  .input-shell:focus-within{
-    border-color:var(--accent-dim);
-  }
-  #question-input{
-    flex:1;
-    background:transparent;
-    border:none;
-    outline:none;
-    color:var(--text);
-    font-size:15px;
-    font-family:'Inter', sans-serif;
-    padding:12px 0;
-  }
-  #question-input::placeholder{ color:var(--text-dim); }
-  #send-btn{
-    background:var(--accent);
-    color:#FFFFFF;
-    border:none;
-    border-radius:7px;
-    padding:11px 18px;
-    font-weight:600;
-    font-size:14px;
-    cursor:pointer;
-    font-family:'Inter', sans-serif;
-    transition:opacity .15s ease;
-  }
-  #send-btn:disabled{ opacity:.45; cursor:default; }
-  #send-btn:not(:disabled):hover{ opacity:.9; }
-
-  .disclaimer{
-    text-align:center;
-    font-size:11px;
-    color:var(--text-dim);
-    margin-top:10px;
-    font-family:'Inter', sans-serif;
-  }
+@media(max-width:900px){
+  .app{grid-template-columns:72px 1fr}.sidebar{padding:15px 8px}.brand span,.section-title,.nav button span{display:none}.brand{justify-content:center}.nav button{justify-content:center}
+  .search{min-width:0;width:42vw}.chat.expanded{width:calc(100vw - 100px)}
+}
+@media(max-width:650px){
+  .app{display:block}.sidebar{display:none}.content{padding:16px}.topbar{padding:0 16px}.search{display:none}
+  .page-head{display:block}.page-head .btn{margin-top:12px}.toolbar{align-items:stretch}.toolbar .field{width:100%}.spacer{display:none}
+  .chat,.chat.expanded{right:10px;bottom:84px;width:calc(100vw - 20px);height:calc(100vh - 104px);max-height:none;border-radius:18px}
+  .chat.expanded .expanded-grid{display:block}.analysis-side{display:none!important}
+  .ai-launcher{right:16px;bottom:16px}.form-grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brandmark">V</div><span>VDart Staffing</span></div>
+    <div class="section-title">Staffing</div>
+    <nav class="nav">
+      <button><b>⌂</b><span>Dashboard</span></button>
+      <button><b>◉</b><span>Candidates</span></button>
+      <button><b>▣</b><span>Clients</span></button>
+      <button><b>♙</b><span>Recruiters</span></button>
+      <button><b>◫</b><span>Interviews</span></button>
+      <button><b>↻</b><span>Roll-Offs</span></button>
+      <button class="active"><b>▤</b><span>Reports</span></button>
+    </nav>
+    <div class="section-title">Employee</div>
+    <nav class="nav">
+      <button><b>✓</b><span>Paperwork</span></button>
+      <button><b>⚙</b><span>Settings</span></button>
+    </nav>
+  </aside>
 
-<header>
-  <div>
-    <div class="brand">Chatbot</div>
-    <div class="subtitle">Staffing data assistant</div>
-  </div>
-</header>
+  <main class="main">
+    <header class="topbar">
+      <div class="search">⌕ <input placeholder="Search staffing records" /></div>
+      <div class="user"><span id="topbarLogin" style="font-size:12px;color:#71879a">Not signed in</span><div class="avatar" id="topbarAvatar">?</div></div>
+    </header>
 
-<main id="thread">
-  <div class="empty-state" id="empty-state">
-    <div class="mark">Ask anything about the data.</div>
-    <div>Candidate counts, client breakdowns, recruiter loads, rolloffs — plain English in, real numbers out.</div>
-    <div class="suggestions">
-      <div class="suggestion-chip">How many candidates do we have in total?</div>
-      <div class="suggestion-chip">How many candidates does each recruiter have?</div>
-      <div class="suggestion-chip">List clients with more than 10 candidates</div>
-      <div class="suggestion-chip">How many candidates are currently Active?</div>
+    <section class="content">
+      <div class="breadcrumb">Staffing / Reports / Candidate Report</div>
+      <div class="page-head">
+        <div>
+          <h1>Candidate Report</h1>
+          <p>This demo table below is static sample UI, not live data -- ask VDart AI (bottom right) for real, permission-scoped answers from the actual database.</p>
+        </div>
+        <button class="btn ai" onclick="openReportBuilder()">✦ Build with VDart AI</button>
+      </div>
+
+      <div class="toolbar">
+        <div class="field">From <input type="date" value="2026-09-01"/></div>
+        <div class="field">To <input type="date" value="2026-09-07"/></div>
+        <div class="field">Status
+          <select><option>All</option><option>Submitted</option><option>Interview</option><option>Placed</option></select>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn">Reset</button>
+        <button class="btn primary" onclick="toast('This demo table is static UI -- ask VDart AI for a real, live answer instead')">Generate Report</button>
+      </div>
+
+      <div id="selectionBar" class="selection-bar">
+        <strong id="selectionText">0 candidates selected</strong>
+        <div class="spacer"></div>
+        <button class="btn ai" onclick="askSelection()">✦ Ask AI about selection</button>
+        <button class="btn" onclick="clearSelection()">Clear</button>
+      </div>
+
+      <div class="card report-card">
+        <div class="report-title">
+          <strong>Candidate Activity (static sample data)</strong>
+          <span style="font-size:11px;color:#8293a0">Demo rows only</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th><input id="selectAll" type="checkbox" onchange="toggleAll(this)"/></th>
+              <th>Candidate</th><th>Skill</th><th>Client</th><th>Recruiter</th><th>Status</th><th>Submitted</th>
+            </tr></thead>
+            <tbody>
+              <tr><td><input class="rowcheck" type="checkbox" onchange="selectionChanged()"/></td><td>Aarav Mehta</td><td>Java</td><td>Apex Systems</td><td>Priya Shah</td><td><span class="status">Interview</span></td><td>Sep 2</td></tr>
+              <tr><td><input class="rowcheck" type="checkbox" onchange="selectionChanged()"/></td><td>Maya Patel</td><td>Data Engineering</td><td>Northstar Labs</td><td>Daniel Roy</td><td><span class="status">Submitted</span></td><td>Sep 3</td></tr>
+              <tr><td><input class="rowcheck" type="checkbox" onchange="selectionChanged()"/></td><td>Noah Williams</td><td>Cloud</td><td>Meridian Health</td><td>Priya Shah</td><td><span class="status warn">Awaiting Feedback</span></td><td>Sep 3</td></tr>
+              <tr><td><input class="rowcheck" type="checkbox" onchange="selectionChanged()"/></td><td>Sophia Chen</td><td>QA Automation</td><td>Bluepeak Tech</td><td>Elena Cruz</td><td><span class="status">Interview</span></td><td>Sep 4</td></tr>
+              <tr><td><input class="rowcheck" type="checkbox" onchange="selectionChanged()"/></td><td>Ethan Brown</td><td>DevOps</td><td>Apex Systems</td><td>Daniel Roy</td><td><span class="status good">Placed</span></td><td>Sep 5</td></tr>
+              <tr><td><input class="rowcheck" type="checkbox" onchange="selectionChanged()"/></td><td>Isha Rao</td><td>React</td><td>Northstar Labs</td><td>Priya Shah</td><td><span class="status">Submitted</span></td><td>Sep 6</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination"><span>Static sample -- not paginated live data</span><span></span></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<button
+  id="vdartAiLauncher"
+  class="ai-launcher"
+  onclick="toggleChat()"
+  aria-label="Open VDart Staffing AI"
+  title="Ask VDart AI"
+>
+  <img
+    src="/static/images.jfif"
+    alt="VDart AI"
+    class="ai-launcher-logo"
+    onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+  />
+  <span class="ai-launcher-fallback" style="display:none">✦</span>
+</button>
+
+<section id="chat" class="chat" aria-label="VDart Staffing AI">
+  <div class="chat-header">
+    <div class="chat-top">
+      <div class="ai-logo">✦</div>
+      <div><div class="chat-name">VDart Staffing AI</div><div class="chat-sub">● Connected · Permission aware · Read-only</div></div>
+      <div class="chat-controls">
+        <button class="icon-btn" title="New chat" onclick="newChat()">＋</button>
+        <button class="icon-btn" title="Expand" onclick="toggleExpand()">↗</button>
+        <button class="icon-btn" title="Close" onclick="toggleChat()">×</button>
+      </div>
+    </div>
+    <div class="chat-tabs">
+      <button class="tab active" data-tab="chatPanel" onclick="switchTab(this)">Chat</button>
+      <button class="tab" data-tab="insightsPanel" onclick="switchTab(this)">Insights</button>
+      <button class="tab" data-tab="savedPanel" onclick="switchTab(this)">Saved</button>
     </div>
   </div>
-</main>
 
-<footer>
-  <div class="input-shell">
-    <input id="question-input" type="text" placeholder="Ask about candidates, clients, recruiters, rolloffs…" autocomplete="off" />
-    <button id="send-btn">Ask</button>
+  <div class="chat-body">
+    <div class="scope">
+      <span>Signed in as: <strong id="scopeLabel">—</strong></span>
+      <button onclick="signOut()">Sign out</button>
+    </div>
+
+    <div id="chatPanel" class="panel active expanded-grid">
+      <div>
+        <div id="conversation">
+          <div class="welcome">
+            <h3>What would you like to know about staffing today?</h3>
+            <p>Ask a question in plain English -- answers come from the real database, scoped to what your login is permitted to see.</p>
+          </div>
+          <div class="quick-grid">
+            <button class="quick" onclick="quickAsk('How many candidates do we have in total?')"><strong>Candidate total</strong><span>Overall count</span></button>
+            <button class="quick" onclick="quickAsk('How many candidates does each recruiter have?')"><strong>Recruiter breakdown</strong><span>Candidates per recruiter</span></button>
+            <button class="quick" onclick="quickAsk('List clients with more than 10 candidates')"><strong>Client breakdown</strong><span>Clients above a threshold</span></button>
+            <button class="quick" onclick="quickAsk('How many roll offs do we have?')"><strong>Roll-offs</strong><span>Plain rolloff count</span></button>
+            <button class="quick" onclick="quickAsk('How many candidates are currently Active?')"><strong>Active candidates</strong><span>Current status count</span></button>
+            <button class="quick" onclick="openReportBuilder()"><strong>Build a report</strong><span>Ask, then download as Excel</span></button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="analysis-side">
+        <div class="side-card">
+          <h4>About this scope</h4>
+          <p style="font-size:11px;color:var(--muted);margin:0">
+            What you can see here is fixed by your login -- it isn't a
+            setting you can change from this panel. If something looks
+            missing, that's your access scope working as intended, not
+            a bug.
+          </p>
+        </div>
+        <div class="side-card">
+          <h4>Last Report Preview</h4>
+          <div id="reportPreviewSide" class="report-preview">
+            <div class="report-line"><span>Status</span><b>No report generated yet</b></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div id="insightsPanel" class="panel">
+      <div class="welcome"><h3>Common questions</h3><p>These aren't live proactive alerts (no such feature exists on the backend yet) -- just quick starting points that run a real query.</p></div>
+      <div class="insight"><div class="eyebrow">Try asking</div><h4>Candidates awaiting a specific status</h4><p>e.g. "How many candidates are currently Inactive?"</p><div class="actions"><button class="mini" onclick="quickAskFromInsights('How many candidates are currently Inactive?')">Ask this</button></div></div>
+      <div class="insight"><div class="eyebrow">Try asking</div><h4>Compare two clients</h4><p>e.g. "Compare average pay rate across HCL, Accenture, and Wipro"</p><div class="actions"><button class="mini" onclick="quickAskFromInsights('Compare average pay rate across HCL, Accenture, and Wipro')">Ask this</button></div></div>
+      <div class="insight"><div class="eyebrow">Try asking</div><h4>Upcoming roll-offs</h4><p>e.g. "Which candidates are ending in the next 30 days?"</p><div class="actions"><button class="mini" onclick="quickAskFromInsights('Which candidates are ending in the next 30 days?')">Ask this</button></div></div>
+    </div>
+
+    <div id="savedPanel" class="panel">
+      <div class="welcome"><h3>Quick prompts</h3><p>One-click real questions -- not saved per-user yet (no backend storage for this exists).</p></div>
+      <div class="saved-item"><span>★</span><div><b>Total candidates</b><span>Overall headcount</span></div><button class="mini" onclick="quickAskFromInsights('How many candidates do we have in total?')">Run</button></div>
+      <div class="saved-item"><span>★</span><div><b>Recruiter breakdown</b><span>Candidates per recruiter</span></div><button class="mini" onclick="quickAskFromInsights('How many candidates does each recruiter have?')">Run</button></div>
+    </div>
   </div>
-  <div class="disclaimer">All phone / email / LinkedIn fields are masked at the database layer before any query runs.</div>
-</footer>
+
+  <div class="chat-compose">
+    <div class="context-row"><span class="context" id="scopeChip">Scoped to your login</span></div>
+    <div class="compose">
+      <button class="plus" onclick="toast('Attachments are not supported by the backend yet')">＋</button>
+      <input id="chatInput" placeholder="Ask VDart AI about staffing…" onkeydown="if(event.key==='Enter') sendMessage()" />
+      <button class="send" id="sendBtn" onclick="sendMessage()">➤</button>
+    </div>
+    <div class="disclaimer">Answers use accessible staffing records and preserve existing permissions and masking.</div>
+  </div>
+</section>
+
+<div id="reportModal" class="modal">
+  <div class="modal-card">
+    <div class="modal-head"><h3>✦ Build a Report</h3><button class="btn" onclick="closeReportBuilder()">Close</button></div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--muted);margin-top:0">
+        This composes one natural-language question from the fields below,
+        sends it to VDart AI, and shows the real result -- there's no
+        separate report engine behind this, it's the same chat pipeline.
+      </p>
+      <div class="form-grid">
+        <div><div class="form-label">Group by</div><select class="form-control" id="reportGroupBy"><option value="recruiter">Recruiter</option><option value="client">Client</option><option value="status">Status</option><option value="BU">BU</option></select></div>
+        <div><div class="form-label">Filter (optional)</div><input class="form-control" id="reportFilter" placeholder="e.g. Active only"/></div>
+      </div>
+      <div class="preview" id="reportPreviewWrap">
+        <div class="preview-head">Preview</div>
+        <div class="preview-empty" id="reportPreviewEmpty">Click "Refresh Preview" to run this as a real question.</div>
+        <div class="table-wrap"><table id="reportPreviewTable" style="display:none"><thead id="reportPreviewHead"></thead><tbody id="reportPreviewBody"></tbody></table></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="refreshPreviewBtn" onclick="refreshReportPreview()">Refresh Preview</button>
+      <button class="btn primary" id="generateExcelBtn" onclick="downloadCurrentReport()" disabled>Generate Excel</button>
+    </div>
+  </div>
+</div>
+
+<div id="loginGate" class="login-gate">
+  <div class="login-card">
+    <h3>Sign in to VDart Staffing AI</h3>
+    <p>Enter the login email configured for your access scope. This is not yet verified authentication -- see project notes.</p>
+    <div class="login-error" id="loginError"></div>
+    <input id="loginInput" placeholder="you@vdartinc.com" onkeydown="if(event.key==='Enter') submitLogin()"/>
+    <button class="btn primary" style="width:100%" onclick="submitLogin()">Continue</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
 
 <script>
-const thread = document.getElementById('thread');
-const emptyState = document.getElementById('empty-state');
-const input = document.getElementById('question-input');
-const sendBtn = document.getElementById('send-btn');
+/* =========================================================
+   AUTH -- talks to auth.py via the X-Login-Id header.
+   This header is UNVERIFIED right now (see auth.py's own
+   security note) -- fine for local/solo testing only.
+   ========================================================= */
+const LOGIN_STORAGE_KEY = 'vdart_chat_login_id';
+let currentLoginId = localStorage.getItem(LOGIN_STORAGE_KEY) || null;
 
-document.querySelectorAll('.suggestion-chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    input.value = chip.textContent;
-    sendQuestion();
-  });
-});
-
-function addUserRow(text){
-  const row = document.createElement('div');
-  row.className = 'row user';
-  row.innerHTML = `<div class="bubble"></div>`;
-  row.querySelector('.bubble').textContent = text;
-  thread.appendChild(row);
-  scrollToBottom();
+function requireLogin(){
+  if(!currentLoginId){
+    document.getElementById('loginGate').classList.add('open');
+  } else {
+    applyLoginToUI(currentLoginId);
+  }
 }
-
-// Plain, professional status messages shown while a question is being
-// processed -- purely cosmetic (frontend-only), rotates on a timer.
-// Deliberately understated: no emojis, no exclamation marks, no cute
-// phrasing -- reads like real status updates, not decoration.
-const THINKING_STATUSES = [
-  "Reading your question…",
-  "Checking the database…",
-  "Analyzing the results…",
-  "Preparing your answer…"
-];
-const THINKING_STEP_MS = 1400;
-
-function startThinkingRotation(thinkingEl){
-  let index = 0;
-  thinkingEl.textContent = THINKING_STATUSES[0];
-  const intervalId = setInterval(() => {
-    index = (index + 1) % THINKING_STATUSES.length;
-    // If we've cycled through everything once and the answer still
-    // isn't back, stay on the final "Preparing your answer…" message
-    // rather than looping endlessly -- avoids feeling repetitive on
-    // slower, multi-step questions.
-    if(index === 0){
-      clearInterval(intervalId);
-      thinkingEl.textContent = THINKING_STATUSES[THINKING_STATUSES.length - 1];
-      return;
-    }
-    thinkingEl.textContent = THINKING_STATUSES[index];
-  }, THINKING_STEP_MS);
-  return intervalId;
+function applyLoginToUI(loginId){
+  document.getElementById('topbarLogin').textContent = loginId;
+  document.getElementById('topbarAvatar').textContent = loginId.slice(0,2).toUpperCase();
+  document.getElementById('scopeLabel').textContent = loginId;
 }
-
-function addAssistantRow(){
-  const row = document.createElement('div');
-  row.className = 'row assistant';
-  row.innerHTML = `
-    <div class="bubble">
-      <div class="thinking-text"></div>
-      <div class="query-strip" style="display:none;">
-        <div class="status-dot thinking"></div>
-        <div class="query-detail"></div>
-      </div>
-    </div>`;
-  thread.appendChild(row);
-  scrollToBottom();
-  return row;
+function submitLogin(){
+  const val = document.getElementById('loginInput').value.trim().toLowerCase();
+  if(!val){ document.getElementById('loginError').textContent = 'Enter a login email.'; return; }
+  currentLoginId = val;
+  localStorage.setItem(LOGIN_STORAGE_KEY, val);
+  document.getElementById('loginGate').classList.remove('open');
+  document.getElementById('loginError').textContent = '';
+  applyLoginToUI(val);
 }
-
-function scrollToBottom(){
-  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+function signOut(){
+  currentLoginId = null;
+  localStorage.removeItem(LOGIN_STORAGE_KEY);
+  document.getElementById('loginInput').value = '';
+  document.getElementById('conversation').innerHTML = '';
+  conversationHistory.length = 0;
+  requireLogin();
 }
+requireLogin();
 
-// Conversation history, kept client-side only (resets on page refresh).
-// Sent with each request so the backend can resolve short follow-ups
-// like "Yes" or "what about by client instead" against recent context.
-const conversationHistory = [];
+/* =========================================================
+   REAL API CALL -- replaces the old fake renderAnswer()
+   keyword-matching entirely.
+   ========================================================= */
+const conversationHistory = []; // [{question, answer}, ...]
 const MAX_HISTORY_TURNS = 4;
 
-async function sendQuestion(){
-  const question = input.value.trim();
-  if(!question) return;
+async function askBackend(question){
+  const res = await fetch('/api/ask', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Login-Id': currentLoginId,
+    },
+    body: JSON.stringify({
+      question,
+      history: conversationHistory.slice(-MAX_HISTORY_TURNS),
+    }),
+  });
+  if(res.status === 401){
+    // login rejected server-side (unconfigured/missing) -- force re-login
+    currentLoginId = null;
+    localStorage.removeItem(LOGIN_STORAGE_KEY);
+    requireLogin();
+    throw new Error('Your login was not recognized by the server. Please sign in again.');
+  }
+  return res.json();
+}
 
-  if(emptyState) emptyState.style.display = 'none';
+function toggleChat(){document.getElementById('chat').classList.toggle('open')}
+function toggleExpand(){document.getElementById('chat').classList.toggle('expanded')}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+function switchTab(btn){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active');document.getElementById(btn.dataset.tab).classList.add('active');
+}
+function openChatTab(){
+  const btn=[...document.querySelectorAll('.tab')].find(x=>x.dataset.tab==='chatPanel');
+  switchTab(btn); document.getElementById('chat').classList.add('open');
+}
+function newChat(){
+  document.getElementById('conversation').innerHTML=`<div class="welcome"><h3>New staffing conversation</h3><p>Ask about candidates, recruiters, clients, or rolloffs.</p></div>`;
+  conversationHistory.length = 0;
+}
+function quickAsk(q){document.getElementById('chatInput').value=q;sendMessage()}
+function quickAskFromInsights(q){openChatTab();setTimeout(()=>quickAsk(q),50)}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 
-  addUserRow(question);
-  const assistantRow = addAssistantRow();
-  const thinkingElForRotation = assistantRow.querySelector('.thinking-text');
-  const rotationIntervalId = startThinkingRotation(thinkingElForRotation);
-  input.value = '';
-  sendBtn.disabled = true;
+async function sendMessage(){
+  if(!currentLoginId){ requireLogin(); return; }
+  const input=document.getElementById('chatInput'); const q=input.value.trim(); if(!q)return;
+  openChatTab();
+  const conv=document.getElementById('conversation');
+  conv.insertAdjacentHTML('beforeend',`<div class="message user">${escapeHtml(q)}</div>`);
+  input.value='';
+  document.getElementById('sendBtn').disabled = true;
+  conv.insertAdjacentHTML('beforeend',`<div id="thinking" class="message bot">Thinking…</div>`);
+  const body=document.querySelector('.chat-body');body.scrollTop=body.scrollHeight;
 
   try{
-    const res = await fetch('/api/ask', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        question,
-        history: conversationHistory.slice(-MAX_HISTORY_TURNS)
-      })
-    });
-    const data = await res.json();
-    clearInterval(rotationIntervalId); // stop rotating the instant the real answer is ready
-
-    const bubble = assistantRow.querySelector('.bubble');
-    const thinkingEl = bubble.querySelector('.thinking-text');
-    const stripEl = bubble.querySelector('.query-strip');
-    const dotEl = bubble.querySelector('.status-dot');
-    const detailEl = bubble.querySelector('.query-detail');
-
-    const answerText = data.answer || 'No answer returned.';
-    if(typeof marked !== 'undefined'){
-      thinkingEl.innerHTML = marked.parse(answerText);
-    } else {
-      // Fallback if the Markdown library fails to load for any reason.
-      thinkingEl.textContent = answerText;
-    }
-
-    // Remember this exchange for future follow-up context (only for
-    // successful, non-blocked/non-errored answers -- no point feeding
-    // the model context about a failed turn).
+    const data = await askBackend(q);
+    document.getElementById('thinking')?.remove();
+    renderAnswer(q, data);
     if(!data.blocked && !data.error){
-      conversationHistory.push({ question, answer: answerText });
+      conversationHistory.push({question: q, answer: data.answer || ''});
     }
-
-    if(data.blocked){
-      dotEl.className = 'status-dot error';
-      detailEl.textContent = 'Blocked by the safety layer before reaching the database.';
-      stripEl.style.display = 'flex';
-    } else if(data.error){
-      dotEl.className = 'status-dot error';
-      detailEl.innerHTML = `<span class="provider">${data.provider || ''}</span> — ${data.error}`;
-      stripEl.style.display = 'flex';
-    }
-    // Note: the SQL/provider strip is intentionally NOT shown for normal,
-    // successful answers anymore -- only for blocked/errored ones, where
-    // seeing what went wrong is actually useful. The data (data.sql,
-    // data.provider) is still returned by the API either way, so this can
-    // be turned back on easily later if wanted (e.g. an admin/debug mode).
-
-    if(data.download_id){
-      const link = document.createElement('a');
-      link.className = 'download-btn';
-      link.href = `/api/download/${data.download_id}?filename=${encodeURIComponent(data.download_filename || 'results.xlsx')}`;
-      link.textContent = `⬇ Download (${data.row_count} rows) — .xlsx`;
-      link.setAttribute('download', data.download_filename || 'results.xlsx');
-      bubble.appendChild(link);
-    }
-    // Note: any follow-up question the assistant asks (e.g. "Want me to
-    // also check X?") is now just plain text inside the answer itself,
-    // rendered by marked.parse() above like any other sentence -- no
-    // separate clickable chip. Conversation history (sent with every
-    // request) is what lets a plain reply like "Yes" work correctly.
   }catch(err){
-    clearInterval(rotationIntervalId); // stop rotating even if the request itself failed
-    const bubble = assistantRow.querySelector('.bubble');
-    bubble.querySelector('.thinking-text').textContent =
-      'Could not reach the server. Is it still running?';
+    document.getElementById('thinking')?.remove();
+    conv.insertAdjacentHTML('beforeend', `<div class="message bot error">Could not reach the server: ${escapeHtml(err.message)}</div>`);
   }finally{
-    sendBtn.disabled = false;
-    scrollToBottom();
+    document.getElementById('sendBtn').disabled = false;
+    body.scrollTop=body.scrollHeight;
   }
 }
 
-sendBtn.addEventListener('click', sendQuestion);
-input.addEventListener('keydown', (e) => {
-  if(e.key === 'Enter') sendQuestion();
+function renderAnswer(question, data){
+  const conv = document.getElementById('conversation');
+  const answerHtml = (typeof marked !== 'undefined')
+    ? marked.parse(data.answer || 'No answer returned.')
+    : escapeHtml(data.answer || 'No answer returned.');
+
+  const stateClass = data.blocked ? 'blocked' : (data.error ? 'error' : '');
+  let chips = '';
+  if(data.blocked) chips += `<span class="chip blocked">Blocked</span>`;
+  if(data.error) chips += `<span class="chip blocked">Error</span>`;
+  if(data.is_general_knowledge) chips += `<span class="chip">General knowledge</span>`;
+  if(data.is_insight) chips += `<span class="chip">Analysis</span>`;
+  if(data.row_count) chips += `<span class="chip">${data.row_count} row${data.row_count===1?'':'s'}</span>`;
+
+  let followupChips = '';
+  if(Array.isArray(data.suggested_followups)){
+    for(const followup of data.suggested_followups){
+      const safe = escapeHtml(followup).replace(/'/g, "&#39;");
+      followupChips += `<button class="mini" onclick="quickAsk('${safe}')">${escapeHtml(followup)}</button>`;
+    }
+  }
+
+  let downloadAction = '';
+  if(data.download_id){
+    downloadAction = `<button class="mini primary" onclick="downloadAnswerFile('${data.download_id}','${(data.download_filename||'results.xlsx').replace(/'/g,"")}')">Excel ↓</button>`;
+  }
+
+  conv.insertAdjacentHTML('beforeend', `<div class="message bot ${stateClass}">
+    ${answerHtml}
+    ${chips ? `<div class="badge-row">${chips}</div>` : ''}
+    ${followupChips ? `<div class="actions">${followupChips}</div>` : ''}
+    ${downloadAction ? `<div class="actions">${downloadAction}</div>` : ''}
+  </div>`);
+}
+
+function downloadAnswerFile(downloadId, filename){
+  window.location.href = `/api/download/${downloadId}?filename=${encodeURIComponent(filename)}`;
+}
+
+/* selection bar -- static demo table only, but the "ask about
+   selection" action DOES send a real question built from the
+   selected (demo) row names */
+function toggleAll(el){document.querySelectorAll('.rowcheck').forEach(c=>c.checked=el.checked);selectionChanged()}
+function clearSelection(){document.querySelectorAll('.rowcheck').forEach(c=>c.checked=false);document.getElementById('selectAll').checked=false;selectionChanged()}
+function selectionChanged(){
+  const n=[...document.querySelectorAll('.rowcheck')].filter(c=>c.checked).length;
+  document.getElementById('selectionBar').classList.toggle('show',n>0);
+  document.getElementById('selectionText').textContent=`${n} candidate${n===1?'':'s'} selected`;
+}
+function askSelection(){
+  const rows = [...document.querySelectorAll('.rowcheck')]
+    .filter(c=>c.checked)
+    .map(c => c.closest('tr').children[1].textContent.trim());
+  if(rows.length === 0) return;
+  document.getElementById('chat').classList.add('open');
+  quickAsk(`Give me details on these candidates: ${rows.join(', ')}`);
+}
+
+/* Report builder -- composes a real question, calls the real
+   backend, and renders the REAL preview_columns/preview_rows
+   this response now includes (see server.py's AnswerResponse). */
+let lastReportDownload = null;
+
+function composeReportQuestion(){
+  const groupBy = document.getElementById('reportGroupBy').value;
+  const filter = document.getElementById('reportFilter').value.trim();
+  let q = `How many candidates does each ${groupBy} have`;
+  if(filter) q += `, filtered to ${filter}`;
+  return q + '?';
+}
+
+async function refreshReportPreview(){
+  if(!currentLoginId){ requireLogin(); return; }
+  const btn = document.getElementById('refreshPreviewBtn');
+  const emptyEl = document.getElementById('reportPreviewEmpty');
+  const tableEl = document.getElementById('reportPreviewTable');
+  const headEl = document.getElementById('reportPreviewHead');
+  const bodyEl = document.getElementById('reportPreviewBody');
+  const genBtn = document.getElementById('generateExcelBtn');
+
+  btn.disabled = true;
+  emptyEl.style.display = 'block';
+  emptyEl.textContent = 'Running…';
+  tableEl.style.display = 'none';
+  genBtn.disabled = true;
+  lastReportDownload = null;
+
+  try{
+    const question = composeReportQuestion();
+    const data = await askBackend(question);
+
+    if(data.blocked || data.error){
+      emptyEl.textContent = data.answer || data.error || 'This request was blocked.';
+      return;
+    }
+
+    if(data.preview_columns && data.preview_rows && data.preview_rows.length){
+      headEl.innerHTML = '<tr>' + data.preview_columns.map(c => `<th>${escapeHtml(c)}</th>`).join('') + '</tr>';
+      bodyEl.innerHTML = data.preview_rows.map(row =>
+        '<tr>' + row.map(v => `<td>${escapeHtml(String(v ?? ''))}</td>`).join('') + '</tr>'
+      ).join('');
+      tableEl.style.display = '';
+      emptyEl.style.display = 'none';
+    } else {
+      emptyEl.textContent = 'This question returned a single value, not a table -- nothing to preview.';
+    }
+
+    document.getElementById('reportPreviewSide').innerHTML = `
+      <div class="report-line"><span>Question</span><b>${escapeHtml(question)}</b></div>
+      <div class="report-line"><span>Rows</span><b>${data.row_count || 0}</b></div>
+    `;
+
+    if(data.download_id){
+      lastReportDownload = {id: data.download_id, filename: data.download_filename || 'report.xlsx'};
+      genBtn.disabled = false;
+    }
+  }catch(err){
+    emptyEl.textContent = `Could not reach the server: ${err.message}`;
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+function downloadCurrentReport(){
+  if(!lastReportDownload) return;
+  downloadAnswerFile(lastReportDownload.id, lastReportDownload.filename);
+}
+
+function openReportBuilder(){document.getElementById('reportModal').classList.add('open')}
+function closeReportBuilder(){document.getElementById('reportModal').classList.remove('open')}
+
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();document.getElementById('chat').classList.add('open');setTimeout(()=>document.getElementById('chatInput').focus(),50)}
+  if(e.key==='Escape'){document.getElementById('reportModal').classList.remove('open')}
 });
 </script>
-
 </body>
 </html>

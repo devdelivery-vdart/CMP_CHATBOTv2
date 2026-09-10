@@ -1,5 +1,5 @@
 """
-Registration file for `candidates_masked` -- REBUILT for the new schema
+Registration file for `candidates_masked_scoped` -- REBUILT for the new schema
 (imported from an Excel/CSV export in staffing_db_v2, replacing the old
 65-table schema). Key differences from the previous version of this file:
   - THREE email columns now (candidate_email, _2, _3), not one
@@ -19,9 +19,9 @@ Registration file for `candidates_masked` -- REBUILT for the new schema
 from tables.base import TableSpec, Example
 
 TABLE = TableSpec(
-    name="candidates_masked",
+    name="candidates_masked_scoped",
     description="""
-Table: candidates_masked
+Table: candidates_masked_scoped
 (Masked view. candidate_email/_2/_3, vendor_contact_email,
 bu_head_emailid, account_manager_1-8, and client_resource_manager_email
 are all partially masked, e.g. "jo****@gmail.com". candidate_phone and
@@ -44,7 +44,7 @@ Columns:
   because of this exact-match issue. If the LIKE match returns more
   than one distinct candidate, do NOT guess -- list the matches and ask
   which one, same as the recruiter_name disambiguation rule.
-  Example: SELECT candidate_name, project_city FROM candidates_masked
+  Example: SELECT candidate_name, project_city FROM candidates_masked_scoped
   WHERE candidate_name LIKE '%Lavanya%Adapala%'
 - candidate_phone (text, MASKED)
 - candidate_email (text, MASKED) -- primary email
@@ -80,7 +80,7 @@ Columns:
   start_date and end_date: a candidate was "active as of" a given past
   date if start_date <= that_date AND (end_date IS NULL OR end_date >
   that_date). Example, for "how many were active 3 months ago":
-  SELECT COUNT(*) FROM candidates_masked
+  SELECT COUNT(*) FROM candidates_masked_scoped
   WHERE start_date <= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
   AND (end_date IS NULL OR end_date > DATE_SUB(CURDATE(), INTERVAL 3 MONTH))
   Do NOT decline these questions as "outside our database" or route
@@ -131,7 +131,7 @@ Columns:
   the query likely used the WRONG year (this year, or a malformed
   date) instead of correctly subtracting 1 from the current year.
   Example -- "how many were active at the end of Q3 last year":
-  SELECT COUNT(*) FROM candidates_masked WHERE start_date <=
+  SELECT COUNT(*) FROM candidates_masked_scoped WHERE start_date <=
   CONCAT(YEAR(CURDATE()) - 1, '-09-30') AND (end_date IS NULL OR
   end_date > CONCAT(YEAR(CURDATE()) - 1, '-09-30'))
   "Last quarter" / "last year" means the immediately preceding
@@ -145,11 +145,11 @@ Columns:
   genuinely relative phrasing like "3 months ago" or "last 90 days"
   that doesn't name a calendar period.
   Example -- "how many candidates were active at the end of Q2 this
-  year": SELECT COUNT(*) FROM candidates_masked WHERE start_date <=
+  year": SELECT COUNT(*) FROM candidates_masked_scoped WHERE start_date <=
   CONCAT(YEAR(CURDATE()), '-06-30') AND (end_date IS NULL OR end_date >
   CONCAT(YEAR(CURDATE()), '-06-30'))
   Example -- "how many candidates started in Q2 this year": SELECT
-  COUNT(*) FROM candidates_masked WHERE start_date BETWEEN
+  COUNT(*) FROM candidates_masked_scoped WHERE start_date BETWEEN
   CONCAT(YEAR(CURDATE()), '-04-01') AND CONCAT(YEAR(CURDATE()), '-06-30')
   CRITICAL -- CONSISTENCY ACROSS MULTI-PERIOD COMPARISONS: when a
   question compares the SAME metric across multiple periods (e.g. "Q1
@@ -165,11 +165,11 @@ Columns:
   structurally identical to how you'd answer it as a standalone
   question, only changing the date boundaries.
   Example -- "compare headcount between Q1 and Q3 this year":
-  SELECT 'Q1' AS period, COUNT(*) AS active_headcount FROM candidates_masked
+  SELECT 'Q1' AS period, COUNT(*) AS active_headcount FROM candidates_masked_scoped
   WHERE start_date <= CONCAT(YEAR(CURDATE()), '-03-31')
   AND (end_date IS NULL OR end_date > CONCAT(YEAR(CURDATE()), '-03-31'))
   UNION ALL
-  SELECT 'Q3' AS period, COUNT(*) FROM candidates_masked
+  SELECT 'Q3' AS period, COUNT(*) FROM candidates_masked_scoped
   WHERE start_date <= CONCAT(YEAR(CURDATE()), '-09-30')
   AND (end_date IS NULL OR end_date > CONCAT(YEAR(CURDATE()), '-09-30'))
   IN-PROGRESS QUARTER HANDLING: if a question asks about the CURRENT
@@ -227,7 +227,7 @@ Columns:
   means the SET DIFFERENCE: plain rolloffs MINUS unexpected rolloffs --
   i.e. candidates whose end_date has passed, but NOT earlier than their
   sow_end_date. Correct SQL:
-  SELECT COUNT(*) FROM candidates_masked
+  SELECT COUNT(*) FROM candidates_masked_scoped
   WHERE end_date IS NOT NULL AND end_date <= CURDATE()
   AND NOT (sow_end_date IS NOT NULL AND end_date < sow_end_date)
   Do NOT just subtract the two numbers yourself in prose (that would
@@ -261,7 +261,7 @@ Columns:
     SUM(CASE WHEN sow_end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS next_30,
     SUM(CASE WHEN sow_end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 60 DAY) THEN 1 ELSE 0 END) AS next_60,
     SUM(CASE WHEN sow_end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 90 DAY) THEN 1 ELSE 0 END) AS next_90
-  FROM candidates_masked
+  FROM candidates_masked_scoped
 - extension_status (text) -- WARNING: this column is 100% blank/empty
   across every single row in this data. Never use it to check whether
   any action, extension, or follow-up has occurred -- it holds no
@@ -293,7 +293,7 @@ unreadable wall of messy raw text instead of a clean, useful summary.
 Correct fallback query:
 SELECT pay_rate_currency, pay_rate_payment_basis,
 AVG(pay_rate_numeric) AS avg_rate, COUNT(*)
-FROM candidates_masked
+FROM candidates_masked_scoped
 GROUP BY pay_rate_currency, pay_rate_payment_basis
 ORDER BY COUNT(*) DESC
 "OVERDUE CANDIDATE" -- a specific business term, defined as: a candidate
@@ -394,7 +394,7 @@ ORDER BY COUNT(*) DESC
   pattern:
   SELECT client, pay_rate_currency, pay_rate_payment_basis,
   AVG(client_rate_numeric - pay_rate_numeric) AS avg_margin, COUNT(*)
-  FROM candidates_masked
+  FROM candidates_masked_scoped
   WHERE pay_rate_currency = client_rate_currency
   AND pay_rate_payment_basis = client_rate_payment_basis
   GROUP BY client, pay_rate_currency, pay_rate_payment_basis
@@ -495,7 +495,7 @@ ORDER BY COUNT(*) DESC
     whichever are present in the question) together with AND.
   Correct pattern for the Pujan Kafle case:
   SELECT candidate_name, job_title, primary_skills, secondary_skills, vendor_contact_person
-  FROM candidates_masked
+  FROM candidates_masked_scoped
   WHERE job_title LIKE '%Cloud engineer%'
   AND (primary_skills LIKE '%AWS%' OR secondary_skills LIKE '%AWS%')
   AND (primary_skills LIKE '%Azure%' OR secondary_skills LIKE '%Azure%')
@@ -555,7 +555,7 @@ ORDER BY COUNT(*) DESC
     include recruiter_name itself in the SELECT/GROUP BY so the actual
     matched value(s) are visible in the result, e.g.:
     SELECT recruiter_name, COUNT(*) AS candidate_count
-    FROM candidates_masked WHERE recruiter_name LIKE '%Selvakumar%'
+    FROM candidates_masked_scoped WHERE recruiter_name LIKE '%Selvakumar%'
     GROUP BY recruiter_name
   - This query's result will naturally reveal whether there is ONE
     matching recruiter or SEVERAL different ones with similar names
@@ -587,7 +587,7 @@ Notes for writing SQL:
   overall total using a plain COUNT(*) style calculation over the same
   filter conditions. Two simple, correct pieces of information beat one
   fragile combined query.
-- Always use table name "candidates_masked" -- never "candidates".
+- Always use table name "candidates_masked_scoped" -- never "candidates".
 - Only SELECT statements.
 - This schema has NO linkedin_url, NO work_email, NO reporting_manager_*
   fields, and NO client_tag_poc_* fields -- do not reference these column
@@ -597,7 +597,7 @@ Notes for writing SQL:
     examples=(
         Example(
             question="How many candidates do we have in total?",
-            sql="SELECT COUNT(*) FROM candidates_masked",
+            sql="SELECT COUNT(*) FROM candidates_masked_scoped",
         ),
         Example(
             question=(
@@ -606,7 +606,7 @@ Notes for writing SQL:
             ),
             sql=(
                 "SELECT candidate_name, job_title, primary_skills, secondary_skills, "
-                "vendor_contact_person FROM candidates_masked "
+                "vendor_contact_person FROM candidates_masked_scoped "
                 "WHERE job_title LIKE '%Cloud engineer%' "
                 "AND (primary_skills LIKE '%AWS%' OR secondary_skills LIKE '%AWS%') "
                 "AND (primary_skills LIKE '%Azure%' OR secondary_skills LIKE '%Azure%') "
@@ -622,7 +622,7 @@ Notes for writing SQL:
             ),
             sql=(
                 "SELECT candidate_name, job_title, primary_skills, secondary_skills, end_client "
-                "FROM candidates_masked "
+                "FROM candidates_masked_scoped "
                 "WHERE end_client LIKE '%Point32Health%' "
                 "AND job_title LIKE '%Kafka Engineer%' "
                 "AND (primary_skills LIKE '%Kafka Administration%' OR secondary_skills LIKE '%Kafka Administration%')"
@@ -633,7 +633,7 @@ Notes for writing SQL:
             sql=(
                 "SELECT client, pay_rate_currency, pay_rate_payment_basis, "
                 "AVG(client_rate_numeric - pay_rate_numeric) AS avg_margin, COUNT(*) AS candidate_count "
-                "FROM candidates_masked "
+                "FROM candidates_masked_scoped "
                 "WHERE pay_rate_currency = client_rate_currency "
                 "AND pay_rate_payment_basis = client_rate_payment_basis "
                 "AND client IS NOT NULL AND client != '' "
@@ -647,7 +647,7 @@ Notes for writing SQL:
             sql=(
                 "SELECT bu_head, pay_rate_currency, pay_rate_payment_basis, "
                 "AVG(client_rate_numeric - pay_rate_numeric) AS avg_margin, COUNT(*) AS candidate_count "
-                "FROM candidates_masked "
+                "FROM candidates_masked_scoped "
                 "WHERE pay_rate_currency = client_rate_currency "
                 "AND pay_rate_payment_basis = client_rate_payment_basis "
                 "AND bu_head IS NOT NULL AND bu_head != '' "
@@ -658,31 +658,31 @@ Notes for writing SQL:
         Example(
             question="How many overdue candidates do we have?",
             sql=(
-                "SELECT COUNT(*) FROM candidates_masked "
+                "SELECT COUNT(*) FROM candidates_masked_scoped "
                 "WHERE sow_end_date IS NOT NULL AND sow_end_date < CURDATE() "
                 "AND end_date IS NULL"
             ),
         ),
         Example(
             question="How many candidates do we have with Accenture?",
-            sql="SELECT COUNT(*) FROM candidates_masked WHERE client = 'Accenture'",
+            sql="SELECT COUNT(*) FROM candidates_masked_scoped WHERE client = 'Accenture'",
         ),
         Example(
             question="How many candidates does Selvakumar have?",
             sql=(
                 "SELECT recruiter_name, COUNT(*) AS candidate_count "
-                "FROM candidates_masked WHERE recruiter_name LIKE '%Selvakumar%' "
+                "FROM candidates_masked_scoped WHERE recruiter_name LIKE '%Selvakumar%' "
                 "GROUP BY recruiter_name"
             ),
         ),
         Example(
             question="How many candidates are Active vs Inactive?",
-            sql="SELECT Status, COUNT(*) FROM candidates_masked GROUP BY Status",
+            sql="SELECT Status, COUNT(*) FROM candidates_masked_scoped GROUP BY Status",
         ),
         Example(
             question="How many candidates have Java as a primary or secondary skill?",
             sql=(
-                "SELECT COUNT(*) FROM candidates_masked WHERE "
+                "SELECT COUNT(*) FROM candidates_masked_scoped WHERE "
                 "primary_skills LIKE '%Java%' OR secondary_skills LIKE '%Java%'"
             ),
         ),
@@ -691,7 +691,7 @@ Notes for writing SQL:
             sql=(
                 "SELECT pay_rate_currency, pay_rate_payment_basis, "
                 "AVG(pay_rate_numeric) AS avg_pay_rate, COUNT(*) AS candidate_count "
-                "FROM candidates_masked "
+                "FROM candidates_masked_scoped "
                 "GROUP BY pay_rate_currency, pay_rate_payment_basis "
                 "ORDER BY candidate_count DESC"
             ),
@@ -699,7 +699,7 @@ Notes for writing SQL:
         Example(
             question="What is the average hourly pay rate in USD?",
             sql=(
-                "SELECT AVG(pay_rate_numeric) FROM candidates_masked "
+                "SELECT AVG(pay_rate_numeric) FROM candidates_masked_scoped "
                 "WHERE pay_rate_currency = 'USD' AND pay_rate_payment_basis = 'Hourly'"
             ),
         ),
@@ -707,21 +707,21 @@ Notes for writing SQL:
             question="How many candidates does each recruiter have?",
             sql=(
                 "SELECT COALESCE(recruiter_name, 'Unassigned') AS recruiter, "
-                "COUNT(*) AS candidate_count FROM candidates_masked "
+                "COUNT(*) AS candidate_count FROM candidates_masked_scoped "
                 "GROUP BY recruiter_name ORDER BY candidate_count DESC"
             ),
         ),
         Example(
             question="How many rolloffs have happened till date?",
             sql=(
-                "SELECT COUNT(*) FROM candidates_masked "
+                "SELECT COUNT(*) FROM candidates_masked_scoped "
                 "WHERE end_date IS NOT NULL AND end_date <= CURDATE()"
             ),
         ),
         Example(
             question="How many unexpected rolloffs have we had, BU wise? Which BU has the most?",
             sql=(
-                "SELECT bu_head, COUNT(*) AS unexpected_rolloffs FROM candidates_masked "
+                "SELECT bu_head, COUNT(*) AS unexpected_rolloffs FROM candidates_masked_scoped "
                 "WHERE end_date IS NOT NULL AND sow_end_date IS NOT NULL "
                 "AND end_date < sow_end_date "
                 "GROUP BY bu_head ORDER BY unexpected_rolloffs DESC"
@@ -730,7 +730,7 @@ Notes for writing SQL:
         Example(
             question="How many candidates in Vinay's BU are ending in the next 60 days?",
             sql=(
-                "SELECT COUNT(*) FROM candidates_masked "
+                "SELECT COUNT(*) FROM candidates_masked_scoped "
                 "WHERE end_date IS NOT NULL "
                 "AND end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 60 DAY) "
                 "AND bu_head = 'Vinay'"
