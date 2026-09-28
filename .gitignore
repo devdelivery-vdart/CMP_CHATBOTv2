@@ -21,3 +21,4 @@ Thumbs.db
 # Editor folders
 .vscode/
 .idea/
+webapp/downloads/*.pdf

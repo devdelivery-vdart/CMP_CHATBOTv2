@@ -1,12 +1,13 @@
 """
-access_guard.py (v3 -- full coverage)
---------------------------------------
+access_guard.py (v4 -- MDM smoke-test logins added)
+-----------------------------------------------------
 Login -> scope lookup, plus the restricted-column fast-reject. The
 REAL row-level enforcement lives in the database (candidates_scoped.sql
-+ candidates_masked_scoped.sql) -- this file's job is just to (a) fail
-closed for unrecognized logins, (b) hand db.py the right session
-variable values, and (c) cheaply reject a query that asks for a
-restricted column before ever hitting the database.
++ candidates_masked_scoped.sql for CMP; deployed_candidates_scoped.sql
++ deployed_candidates_masked_scoped.sql for MDM) -- this file's job is
+just to (a) fail closed for unrecognized logins, (b) hand db.py the
+right session variable values, and (c) cheaply reject a query that
+asks for a restricted column before ever hitting the database.
 
 TWO DIFFERENT MATCHING DIRECTIONS, BY SCOPE TYPE (see
 candidates_scoped.sql's header comment for the full explanation):
@@ -17,11 +18,12 @@ candidates_scoped.sql's header comment for the full explanation):
     may be spelled multiple ways across rows. scope_values is a LIST
     of that person's confirmed name variants.
 
-Every account_manager entry below has a confirmed real candidate_count
-next to it, taken directly from a ground-truth query grouping the raw
-account_managers column by email -- these are the numbers
-rbac_regression.py checks against, so if a count here ever needs
-correcting, update BOTH files together or they drift apart silently.
+Every real account_manager entry below has a confirmed real
+candidate_count next to it, taken from staffing_db_v2 (the OLD CMP
+database) -- these numbers are NOT meaningful against mdm_chatbot,
+which currently holds only synthetic/placeholder data. See the
+MDM SMOKE-TEST LOGINS block below for entries specific to testing the
+new deployed_candidates_* views.
 """
 
 import re
@@ -61,7 +63,7 @@ USER_SCOPES = {
     "manikandan.c@vdartinc.com":  {"scope_type": "account_manager", "scope_value": "manikandan.c@vdartinc.com",  "can_view_restricted": False},  # 85
     "parijat@vdartinc.com":       {"scope_type": "account_manager", "scope_value": "parijat@vdartinc.com",       "can_view_restricted": False},  # 84
     "sherman@vdartinc.com":       {"scope_type": "account_manager", "scope_value": "sherman@vdartinc.com",       "can_view_restricted": False},  # 84 -- tied with parijat
-    "priya.c@vdartinc.com":       {"scope_type": "account_manager", "scope_value": "priya.c@vdartinc.com",       "can_view_restricted": False},  # 73 -- CONFIRMED (earlier 25 was phpMyAdmin's page-size limit, not a real discrepancy)
+    "priya.c@vdartinc.com":       {"scope_type": "account_manager", "scope_value": "priya.c@vdartinc.com",       "can_view_restricted": False},  # 73
     "veera.b@vdartinc.com":       {"scope_type": "account_manager", "scope_value": "veera.b@vdartinc.com",       "can_view_restricted": False},  # 72 -- three-way tie
     "deepak.g@vdartinc.com":      {"scope_type": "account_manager", "scope_value": "deepak.g@vdartinc.com",      "can_view_restricted": False},  # 72 -- three-way tie
     "kvalli.p@vdartinc.com":      {"scope_type": "account_manager", "scope_value": "kvalli.p@vdartinc.com",      "can_view_restricted": False},  # 72 -- three-way tie
@@ -106,6 +108,51 @@ USER_SCOPES = {
         "scope_type": "unrestricted",
         "can_view_restricted": True,
     },
+
+    # ---------------------------------------------------------------
+    # MDM SMOKE-TEST LOGINS -- deliberately fake @gmail.com addresses,
+    # matching the placeholder values just written into
+    # mdm_chatbot.deployed_candidates (id=2, id=3). These exist ONLY to
+    # prove the new deployed_candidates_masked_scoped view chain works
+    # end-to-end (row scope, masking, restricted-column gating) against
+    # real emails already wired through the whole pipeline -- they are
+    # NOT real people and carry no meaningful candidate_count. Remove
+    # this whole block once real Ceipal-synced data and real MDM logins
+    # exist, and remove/replace the corresponding UPDATE'd test rows in
+    # deployed_candidates at the same time so nothing stale lingers.
+    # ---------------------------------------------------------------
+    "test.am1@gmail.com": {
+        "scope_type": "account_manager",
+        "scope_value": "test.am1@gmail.com",
+        "can_view_restricted": False,
+    },  # shares deployed_candidates.id=2 ("John Doe") with test.am2 --
+        # tests that two different account managers on the SAME row
+        # both correctly see it.
+    "test.am2@gmail.com": {
+        "scope_type": "account_manager",
+        "scope_value": "test.am2@gmail.com",
+        "can_view_restricted": False,
+    },  # shares id=2 with test.am1 -- see above.
+    "test.am3@gmail.com": {
+        "scope_type": "account_manager",
+        "scope_value": "test.am3@gmail.com",
+        "can_view_restricted": False,
+    },  # sole account manager on deployed_candidates.id=3 ("Roll Test")
+        # -- should NEVER see id=2, proving isolation from test.am1/am2.
+    "test.recruiter@gmail.com": {
+        "scope_type": "recruiter",
+        "scope_values": ["Test Recruiter"],
+        "can_view_restricted": False,
+    },  # matches recruiter_name = 'Test Recruiter' on id=3 only.
+    "test.bu@gmail.com": {
+        "scope_type": "bu",
+        "scope_values": ["TestBU"],
+        "can_view_restricted": False,
+    },  # matches bu_head = 'TestBU' on id=3 only -- combined with
+        # test.am3 and test.recruiter both also resolving to id=3, this
+        # lets you confirm all three scope TYPES independently arrive
+        # at the same correct row via three completely different
+        # matching mechanisms.
 }
 
 # Columns NEVER shown to a scoped (non-unrestricted, non-can_view_restricted)

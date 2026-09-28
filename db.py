@@ -16,8 +16,6 @@ import mysql.connector
 import config
 from access_guard import get_scope_for_user
 
-SCOPED_VIEW = "candidates_masked_scoped"
-
 
 def _get_connection():
     return mysql.connector.connect(
@@ -26,8 +24,8 @@ def _get_connection():
         user=config.DB_USER,
         password=config.DB_PASSWORD,
         database=config.DB_NAME,
+        use_pure=True,  # C extension crashes (0xC0000005) on this machine; pure-Python driver is stable
     )
-
 
 def _apply_scope(cursor, login_id: str) -> None:
     """

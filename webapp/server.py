@@ -64,6 +64,8 @@ class AnswerResponse(BaseModel):
     error: str | None = None
     download_id: str | None = None
     download_filename: str | None = None
+    pdf_download_id: str | None = None
+    pdf_download_filename: str | None = None
     row_count: int = 0
     suggested_followups: list[str] = []
     is_general_knowledge: bool = False
@@ -120,6 +122,8 @@ def _maybe_cache_and_return(response: AnswerResponse, question: str, history: li
 _NAME_LIKE_PATTERN = re.compile(
     r"(candidate_name|recruiter_name)\s+LIKE\s+'%([^%']+)%'", re.IGNORECASE
 )
+
+_RESTRICTED_TOPIC_RE = re.compile(r"\bmargin\b|client.?rate|profit(?:ability)?", re.IGNORECASE)
 
 
 def _extract_name_search(sql: str):
@@ -199,6 +203,7 @@ def _answer_database_part(db_question: str, history: list, login_id: str) -> Ans
     """
     try:
         sql, provider, _raw = generate_sql(db_question, history=history)
+        print(f"[DEBUG] Generated SQL: {sql}")
     except NotDatabaseQuestion:
         print(f"[server] generate_sql vetoed {db_question!r} as NOT_DATABASE_QUESTION "
               f"despite classify_question flagging it as a database question.")
@@ -258,9 +263,12 @@ def _answer_database_part(db_question: str, history: list, login_id: str) -> Ans
 
     download_id = None
     download_filename = None
+    pdf_download_id = None
+    pdf_download_filename = None
     is_tabular = len(rows) > 1 or (len(rows) == 1 and len(columns) > 1)
     if is_tabular:
         download_id, download_filename = export.export_to_xlsx(columns, rows)
+        pdf_download_id, pdf_download_filename = export.export_to_pdf(columns, rows, title=db_question)
 
     return AnswerResponse(
         answer=answer_text,
@@ -268,6 +276,8 @@ def _answer_database_part(db_question: str, history: list, login_id: str) -> Ans
         provider=provider,
         download_id=download_id,
         download_filename=download_filename,
+        pdf_download_id=pdf_download_id,
+        pdf_download_filename=pdf_download_filename,
         row_count=len(rows),
         suggested_followups=_followups_for(login_id, db_question),
         preview_columns=columns if rows else None,
@@ -354,6 +364,22 @@ def _answer_insight_part(db_question: str, history: list, login_id: str) -> Answ
             return AnswerResponse(answer=_restricted_skip_note(), blocked=True)
         return AnswerResponse(answer="I couldn't retrieve the data needed to analyze that.")
 
+    # SAFETY SHORT-CIRCUIT: if the ORIGINAL question is fundamentally
+    # about a restricted topic (margin/client-rate/profitability) AND
+    # any part of it was blocked, do NOT hand the surviving sub_results
+    # to the synthesis model at all -- even if some unrelated
+    # sub-question happened to succeed (e.g. a plain candidate count),
+    # handing that leftover number to the model alongside a margin
+    # question invites it to REPURPOSE that number's meaning to fill
+    # the narrative gap (a real, observed bug: a plain "1 candidate
+    # total" got relabeled by the model as "1 candidate you can view
+    # margin for" -- a false, invented claim about permission state,
+    # not a phrasing issue). Skip synthesis entirely in this case and
+    # return only the deterministic note -- never let the model
+    # improvise around data it was blocked from seeing.
+    if had_restricted_skip and _RESTRICTED_TOPIC_RE.search(db_question):
+        return AnswerResponse(answer=_restricted_skip_note(), blocked=True)
+
     answer_text, provider = synthesize_insight_answer(db_question, sub_results, history=history)
 
     if had_restricted_skip:
@@ -361,16 +387,21 @@ def _answer_insight_part(db_question: str, history: list, login_id: str) -> Answ
 
     download_id = None
     download_filename = None
+    pdf_download_id = None
+    pdf_download_filename = None
     largest = max(sub_results, key=lambda r: len(r[3]))
     _, _, largest_columns, largest_rows = largest
     if len(largest_rows) > 1 or (len(largest_rows) == 1 and len(largest_columns) > 1):
         download_id, download_filename = export.export_to_xlsx(largest_columns, largest_rows)
+        pdf_download_id, pdf_download_filename = export.export_to_pdf(largest_columns, largest_rows, title=db_question)
 
     return AnswerResponse(
         answer=answer_text,
         provider=provider,
         download_id=download_id,
         download_filename=download_filename,
+        pdf_download_id=pdf_download_id,
+        pdf_download_filename=pdf_download_filename,
         row_count=sum(len(r[3]) for r in sub_results),
         is_insight=True,
         suggested_followups=_followups_for(login_id, db_question),
@@ -444,14 +475,21 @@ def ask(payload: Question, request: Request):
     )
 
 
+_DOWNLOAD_MEDIA_TYPES = {
+    "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "pdf": "application/pdf",
+    "csv": "text/csv",
+}
+
+
 @app.get("/api/download/{file_id}")
 def download(file_id: str, filename: str = "results.xlsx"):
-    filepath = export.resolve_download_path(file_id, "xlsx")
+    filepath, ext = export.resolve_download_path(file_id)
     if not filepath:
         return {"error": "This download has expired or was not found. Please ask the question again."}
     return FileResponse(
         filepath,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        media_type=_DOWNLOAD_MEDIA_TYPES.get(ext, "application/octet-stream"),
         filename=filename,
     )
 

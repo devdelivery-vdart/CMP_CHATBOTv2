@@ -8,9 +8,11 @@ way to bypass masking.
 """
 
 import csv
+import functools
 import io
 import os
 import uuid
+from datetime import datetime
 
 from openpyxl import Workbook
 from reportlab.lib.pagesizes import letter, landscape
@@ -156,6 +158,75 @@ def _apply_read_only_protection(wb, ws) -> None:
     wb.security.lockStructure = True
 
 
+# The same logo used in the chat header -- reused here so an exported
+# PDF visually matches the app it came from rather than looking like a
+# generic, unbranded data dump.
+_LOGO_PATH = os.path.join(os.path.dirname(__file__), "webapp", "static", "images.jfif")
+
+_NAVY = colors.HexColor("#0e2a52")
+_BLUE = colors.HexColor("#2f6fed")
+_MUTED = colors.HexColor("#6f8496")
+_LINE = colors.HexColor("#c9d6e0")
+
+
+def _draw_page_frame(canvas, doc, generated_note: str) -> None:
+    """
+    Draws the letterhead-style frame on every page: a bordered page
+    edge, a navy header band with the VDart logo + brand text, and a
+    footer with a generated-on timestamp and page number.
+
+    Runs as reportlab's onFirstPage/onLaterPages callback -- it draws
+    directly on the canvas OUTSIDE the flowable content, which is why
+    this is separate from the Table/Paragraph elements in
+    export_to_pdf() below. doc.topMargin/bottomMargin are set large
+    enough there to leave room for the header band and footer drawn
+    here, so body content never overlaps them.
+    """
+    canvas.saveState()
+    width, height = doc.pagesize
+    margin = 0.3 * inch
+
+    # A formal bordered edge around the whole page -- the detail that
+    # makes a plain data table read as an actual report/document rather
+    # than a raw export.
+    canvas.setStrokeColor(_NAVY)
+    canvas.setLineWidth(1.1)
+    canvas.rect(margin, margin, width - 2 * margin, height - 2 * margin)
+
+    # Navy header band, logo + brand text.
+    header_h = 0.5 * inch
+    canvas.setFillColor(_NAVY)
+    canvas.rect(margin, height - margin - header_h, width - 2 * margin, header_h, fill=1, stroke=0)
+
+    text_x = margin + 14
+    if os.path.isfile(_LOGO_PATH):
+        try:
+            logo_size = header_h - 14
+            canvas.drawImage(
+                _LOGO_PATH,
+                margin + 10, height - margin - header_h + 7,
+                width=logo_size, height=logo_size,
+                preserveAspectRatio=True, mask="auto",
+            )
+            text_x = margin + 10 + logo_size + 10
+        except Exception:
+            pass  # a missing/unreadable logo should never break the export itself
+
+    canvas.setFillColor(colors.white)
+    canvas.setFont("Helvetica-Bold", 13)
+    canvas.drawString(text_x, height - margin - header_h / 2 - 4, "VDart")
+    canvas.setFont("Helvetica", 7.5)
+    canvas.drawString(text_x, height - margin - header_h / 2 + 9, "Staffing Data Report")
+
+    # Footer: generated-on note (left) + page number (right).
+    canvas.setFillColor(_MUTED)
+    canvas.setFont("Helvetica", 7)
+    canvas.drawString(margin + 8, margin + 7, generated_note)
+    canvas.drawRightString(width - margin - 8, margin + 7, f"Page {canvas.getPageNumber()}")
+
+    canvas.restoreState()
+
+
 def export_to_pdf(columns, rows, base_filename: str = "results", title: str | None = None) -> tuple[str, str]:
     """
     Writes rows to a .pdf file as a formatted table. Returns
@@ -191,6 +262,14 @@ def export_to_pdf(columns, rows, base_filename: str = "results", title: str | No
         "ExportHeader", parent=styles["Normal"], fontSize=8, leading=10,
         textColor=colors.white, fontName="Helvetica-Bold",
     )
+    subtitle_style = ParagraphStyle(
+        "ExportSubtitle", parent=styles["Normal"], fontSize=13, leading=16,
+        textColor=_NAVY, fontName="Helvetica-Bold", spaceAfter=2,
+    )
+    meta_style = ParagraphStyle(
+        "ExportMeta", parent=styles["Normal"], fontSize=8, leading=11,
+        textColor=_MUTED,
+    )
 
     table_data = []
     if columns:
@@ -200,15 +279,20 @@ def export_to_pdf(columns, rows, base_filename: str = "results", title: str | No
 
     doc_elements = []
     if title:
-        doc_elements.append(Paragraph(title, styles["Title"]))
-        doc_elements.append(Spacer(1, 0.2 * inch))
+        doc_elements.append(Paragraph(title, subtitle_style))
+        doc_elements.append(Paragraph(
+            f"{len(rows)} row{'s' if len(rows) != 1 else ''} · Confidential -- VDart internal use",
+            meta_style,
+        ))
+        doc_elements.append(Spacer(1, 0.15 * inch))
 
     if table_data:
         num_cols = len(table_data[0])
         table = Table(table_data, repeatRows=1 if columns else 0)
         table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1d73d5")),
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#c9d6e0")),
+            ("BACKGROUND", (0, 0), (-1, 0), _NAVY),
+            ("GRID", (0, 0), (-1, -1), 0.5, _LINE),
+            ("BOX", (0, 0), (-1, -1), 0.75, _NAVY),
             ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f4f8fb")]),
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ("LEFTPADDING", (0, 0), (-1, -1), 4),
@@ -224,13 +308,21 @@ def export_to_pdf(columns, rows, base_filename: str = "results", title: str | No
     filename = f"{base_filename}.pdf"
     filepath = os.path.join(DOWNLOAD_DIR, f"{file_id}.pdf")
 
+    generated_note = f"Generated {datetime.now().strftime('%b %d, %Y %I:%M %p')}"
+    page_frame = functools.partial(_draw_page_frame, generated_note=generated_note)
+
+    # Top/bottom margins are deliberately larger than the border margin
+    # alone -- they leave room for the navy header band and footer text
+    # that _draw_page_frame() draws directly on the canvas, so body
+    # content (the title/table above) never overlaps either one.
     doc = SimpleDocTemplate(
         filepath,
         pagesize=landscape(letter),
-        leftMargin=0.4 * inch, rightMargin=0.4 * inch,
-        topMargin=0.4 * inch, bottomMargin=0.4 * inch,
+        leftMargin=0.45 * inch, rightMargin=0.45 * inch,
+        topMargin=0.3 * inch + 0.5 * inch + 0.15 * inch,
+        bottomMargin=0.3 * inch + 0.2 * inch,
     )
-    doc.build(doc_elements)
+    doc.build(doc_elements, onFirstPage=page_frame, onLaterPages=page_frame)
 
     return file_id, filename
 
@@ -252,8 +344,19 @@ def export_to_csv(columns, rows, base_filename: str = "results") -> tuple[str, s
     return file_id, filename
 
 
-def resolve_download_path(file_id: str, extension: str) -> str | None:
-    """Given a file_id from a previous export, returns the real filepath
-    if it still exists (may have been auto-cleaned up after MAX_AGE_SECONDS)."""
-    path = os.path.join(DOWNLOAD_DIR, f"{file_id}.{extension}")
-    return path if os.path.isfile(path) else None
+def resolve_download_path(file_id: str) -> tuple[str, str] | tuple[None, None]:
+    """
+    Given a file_id from a previous export, returns (filepath, extension)
+    if it still exists (may have been auto-cleaned up after
+    MAX_AGE_SECONDS), or (None, None) if not.
+
+    Tries every format this module can produce -- file_id is always a
+    fresh random UUID (see export_to_xlsx/export_to_pdf/export_to_csv
+    above), so there's no ambiguity in which single extension actually
+    exists on disk for a given id.
+    """
+    for ext in ("xlsx", "pdf", "csv"):
+        path = os.path.join(DOWNLOAD_DIR, f"{file_id}.{ext}")
+        if os.path.isfile(path):
+            return path, ext
+    return None, None

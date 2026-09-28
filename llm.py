@@ -101,6 +101,39 @@ real bugs fixed here):
    column that exists in the schema just because the request itself is
    unspecific.
 
+PERCENTAGES AND COMPARISONS -- COMPUTE IN SQL, NOT LATER IN PROSE:
+whenever a query GROUPs candidates into 2 or more categories (by
+Status, by recruiter, by client, by BU, etc.), ALSO add a
+percentage-of-total column to that SAME query using a window function
+-- this is far more reliable than estimating a percentage afterward
+from a text summary, and costs nothing extra (it's still one query,
+one LLM call). Example:
+
+  SELECT status, COUNT(*) AS candidate_count,
+         ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS pct_of_total
+  FROM deployed_candidates_masked_scoped
+  GROUP BY status
+
+`SUM(COUNT(*)) OVER ()` computes the true total across every group
+actually returned by this exact query -- it automatically respects
+whatever WHERE filter and row-level RBAC scope is already applied, so
+the percentage is always honest and never needs a second query, a
+subquery against a different table, or a guessed denominator.
+- Add this percentage column for any GROUP BY producing 2+ category
+  rows -- UNLESS the question is a single flat count with nothing to
+  compare against (e.g. "how many candidates total" -- skip it there,
+  a lone number has no "of what" to be a percentage of).
+- For a direct comparison between named entities (e.g. "compare
+  Accenture and Wipro"), compute each one's share of their combined
+  total the same way, still within this one query -- never as a
+  separate follow-up query.
+- If MariaDB in this environment doesn't support the OVER() window
+  function for some reason, use `ROUND(COUNT(*) * 100.0 / (SELECT
+  COUNT(*) FROM <same table/view> <same WHERE clause if any>), 2)`
+  instead -- but always mirror the exact same WHERE filter in the
+  subquery's denominator as the main query uses, never a plain
+  unfiltered table count when the main query itself is filtered.
+
 ROUTING: if the question has NOTHING to do with this staffing database
 (the schema above) -- e.g. general knowledge questions like "what type
 of company is Accenture", "what does SOW stand for", "who is the CEO of
@@ -181,6 +214,19 @@ syntax, not plain dashes or commas, to make answers easy to scan:
   in the table -- showing the top 15-20 in the table with a note that
   more are available (and downloadable) is fine.
 
+COMPLETENESS -- never silently omit a row from an UNTRUNCATED result
+set. If note_if_truncated says nothing was cut off, every row you were
+given must appear in your table/breakdown -- including a row whose
+category looks unusual, blank, NULL, or like a small residual group
+(e.g. a blank/NULL Status value must still get its own labeled row,
+e.g. "Unspecified" or "(blank)", never be dropped silently). Dropping a
+row is just as misleading as inventing one: it quietly changes the
+true total/denominator without telling the person. This matters
+especially for the percentage rule below -- a percentage is only
+honest when every row making up the whole has actually been shown, so
+never compute one against a breakdown you've secretly left a row out
+of.
+
 If the results represent a breakdown/grouping (e.g. counts per recruiter,
 per client), do NOT state an overall "total" number unless the query
 itself explicitly computed one (e.g. a separate COUNT(*) with no GROUP
@@ -193,6 +239,55 @@ things, answer with what the query actually shows and note that the
 other part (e.g. "the exact overall total") would need a follow-up
 question to calculate precisely, rather than guessing or mislabeling a
 group count as a total.
+
+PERCENTAGES AND COMPARISONS -- prefer a value the SQL query already
+computed for you. If a column in the results is clearly a percentage
+or ratio the query itself calculated (e.g. named something like
+pct_of_total, percentage, ratio -- per the SQL-generation instructions
+that now add this automatically for category breakdowns), just report
+that value plainly and correctly attributed to its row -- do NOT
+recompute or second-guess it yourself, and do not perform your own
+separate division when one is already sitting in the data.
+
+Only if NO such column exists, but a percentage would still clearly
+help answer the question, may you compute one yourself -- and only
+under the same strict discipline as everything else in this prompt:
+- Only state a percentage when BOTH the part and the whole are
+  literally present, complete, and untruncated in the results you were
+  given -- e.g. a Status breakdown whose rows cover EVERY status value
+  actually returned (per the COMPLETENESS rule above -- if the results
+  contain 3 distinct status groups, all 3 must be shown, not just the
+  2 you find most relevant), with note_if_truncated confirming nothing
+  was cut off. Once that condition is met, COMPUTE the percentage --
+  this is not optional caution once completeness is satisfied. Sum ALL
+  the rows shown to get the whole (e.g. 1,579 + 18 + 2,044 = 3,641),
+  then divide the specific part being discussed by that whole. Example:
+  "35 Active out of 42 total (about 83%)." Do not withhold a percentage
+  out of general caution once every row is genuinely in front of you --
+  the completeness rule above exists precisely so you CAN trust the sum
+  of what you were given as the true whole.
+- NEVER compute a percentage against a denominator that isn't itself
+  present in this result set -- do not assume, guess, or recall a
+  "total" from a different question or from conversation history.
+  If the whole you'd need to divide by isn't in the data in front of
+  you, skip the percentage and state the raw number(s) plainly instead.
+- NEVER compute a percentage if note_if_truncated says any rows were
+  omitted -- a partial preview cannot give you an honest denominator,
+  for the exact same reason you never self-calculate a truncated total
+  above.
+- For a COMPARISON between two or more named entities/values in the
+  SAME result set (e.g. two clients' candidate counts, two recruiters'
+  breakdowns), you may state the relative difference using ONLY the
+  numbers shown (e.g. "Accenture has roughly 2x as many candidates as
+  Wipro") -- never pull a number from a different question or from
+  history to make the comparison.
+- Always show your work: state the raw numbers a percentage or
+  comparison came from in the same sentence as the computed figure, so
+  it's auditable at a glance, never a bare percentage with its inputs
+  hidden.
+- If none of the above conditions are safely met, that's fine -- just
+  answer with the plain numbers and skip the percentage/comparison
+  rather than forcing one that isn't honestly computable.
 
 NAME DISAMBIGUATION: if the SQL query filtered a person's name using
 LIKE (a partial/fuzzy match, e.g. WHERE recruiter_name LIKE '%X%') --
@@ -724,6 +819,13 @@ Rules:
   add up a breakdown table themselves. Breakdown-style sub-questions
   (by recruiter, by month, etc.) should come AFTER this direct total
   question, not replace it.
+- IMPORTANT: if the original question invites any percentage or
+  comparison (see the synthesis prompt's narrow exception for exactly
+  what's allowed there), make sure your sub-questions produce BOTH raw
+  numbers such a comparison would need as separate, simple counts (e.g.
+  "entity's count" AND "entity's total", or "entity A's count" AND
+  "entity B's count") -- never a single sub-question asking for a
+  pre-computed rate (see the rule immediately below for why).
 - CRITICAL -- NEVER ask for a pre-computed "rate", "ratio", or
   "percentage compared to average" as a single sub-question (e.g. NEVER
   generate something like "what is X's rate compared to the
@@ -823,20 +925,25 @@ present the breakdown table, or explicitly say a specific follow-up
 query could calculate the precise total -- never estimate or add it
 up yourself.
 
-NARROW EXCEPTION -- simple, auditable single division ONLY: if the
-sub-question results give you exactly two raw numbers that form one
-obvious ratio (e.g. "15 unexpected rolloffs" and "41 total
-candidates" for the same entity), you MAY compute and state that one
-single division (15 / 41 = 36.6%) -- but you MUST show both raw
-input numbers explicitly in the same sentence as the computed
-percentage (e.g. "15 of Cognizant's 41 candidates (about 36.6%) had
-unexpected rolloffs"), never state a bare percentage with its inputs
-hidden. Never chain more than one arithmetic operation together
-(e.g. never compute a rate AND THEN compare two rates to each other
-in your head -- if you need to compare an entity's rate to a
-company-wide rate, state each rate separately with its own two
-visible input numbers, and let the reader compare them, rather than
-computing a comparison ratio yourself).
+NARROW EXCEPTION -- simple, auditable single division ONLY, but USE IT
+WHEREVER IT APPLIES: a bare count is harder to interpret than a count
+with its percentage/comparison alongside it, so whenever the
+sub-question results genuinely give you exactly two raw numbers that
+form one obvious ratio or comparison (e.g. "15 unexpected rolloffs" and
+"41 total candidates" for the same entity; or two entities' counts
+side by side), you SHOULD compute and state that one single division or
+comparison, not just "may" -- but you MUST show both raw input numbers
+explicitly in the same sentence as the computed figure (e.g. "15 of
+Cognizant's 41 candidates (about 36.6%) had unexpected rolloffs"),
+never state a bare percentage or comparison with its inputs hidden.
+Never chain more than one arithmetic operation together (e.g. never
+compute a rate AND THEN compare two rates to each other in your head --
+if you need to compare an entity's rate to a company-wide rate, state
+each rate separately with its own two visible input numbers, and let
+the reader compare them, rather than computing a comparison ratio
+yourself). If the two numbers a percentage/comparison would need are
+NOT both cleanly present in the sub-question results, do not attempt
+one -- present the raw findings you do have and stop there.
 
 CRITICAL -- CROSS-CHECK A TOTAL AGAINST ITS OWN BREAKDOWN: if one
 sub-question result gives you a single overall total (e.g. "88
