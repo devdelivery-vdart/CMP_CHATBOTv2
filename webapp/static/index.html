@@ -1941,6 +1941,62 @@ tbody tr:hover{
     0 5px 14px rgba(37,99,235,.2);
 }
 
+/* Export action buttons */
+.export-excel,
+.export-pdf{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:32px;
+  padding:6px 11px;
+  font-weight:800;
+}
+
+.export-excel svg,
+.export-pdf svg{
+  width:15px;
+  height:15px;
+  flex-shrink:0;
+}
+
+.export-excel{
+  color:#168a62;
+  background:#edf9f5;
+  border-color:#bfe5d5;
+}
+
+.export-excel:hover:not(:disabled){
+  color:#fff;
+  background:#168a62;
+  border-color:#168a62;
+  box-shadow:0 5px 14px rgba(22,138,98,.22);
+}
+
+.export-pdf{
+  color:#d64545;
+  background:#fff0f0;
+  border-color:#f2c9c9;
+}
+
+.export-pdf:hover:not(:disabled){
+  color:#fff;
+  background:#d64545;
+  border-color:#d64545;
+  box-shadow:0 5px 14px rgba(214,69,69,.22);
+}
+
+.export-excel:hover svg,
+.export-pdf:hover svg{
+  transform:translateY(-1px);
+}
+
+.export-excel svg,
+.export-pdf svg{
+  transition:transform .15s ease;
+}
+
+
 
 /* =========================================================
    HISTORY
@@ -4407,12 +4463,26 @@ tbody tr:hover{
 
 
       <button
-        class="btn primary"
+        class="btn primary export-excel"
         id="generateExcelBtn"
         onclick="downloadCurrentReport()"
         disabled
       >
-        Generate Excel
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <path d="M14 2v6h6"></path>
+          <path d="M8 13l4 5"></path>
+          <path d="M12 13l-4 5"></path>
+        </svg>
+        <span>Generate Excel</span>
       </button>
 
     </div>
@@ -6745,7 +6815,9 @@ function renderAnswer(
 
     downloadAction += `
       <button
-        class="mini primary"
+        class="mini export-excel"
+        title="Export to Excel"
+        aria-label="Export to Excel"
         onclick="
           downloadAnswerFile(
             '${data.download_id}',
@@ -6753,7 +6825,21 @@ function renderAnswer(
           )
         "
       >
-        Excel ↓
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <path d="M14 2v6h6"></path>
+          <path d="M8 13l4 5"></path>
+          <path d="M12 13l-4 5"></path>
+        </svg>
+        <span>Excel</span>
       </button>
     `;
 
@@ -6774,7 +6860,9 @@ function renderAnswer(
 
     downloadAction += `
       <button
-        class="mini"
+        class="mini export-pdf"
+        title="Export to PDF"
+        aria-label="Export to PDF"
         onclick="
           downloadAnswerFile(
             '${data.pdf_download_id}',
@@ -6782,7 +6870,22 @@ function renderAnswer(
           )
         "
       >
-        PDF ↓
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <path d="M14 2v6h6"></path>
+          <path d="M8 13h2a2 2 0 0 1 0 4H8v-4z"></path>
+          <path d="M14 13v4"></path>
+          <path d="M14 13h2"></path>
+        </svg>
+        <span>PDF</span>
       </button>
     `;
 
