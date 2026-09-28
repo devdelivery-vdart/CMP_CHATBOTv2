@@ -3,1155 +3,7452 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>VDart Staffing AI</title>
+
+<title>VDart Staffing Intelligence</title>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
+
 <style>
-:root{
-  --blue:#2f6fed; --blue2:#1d4fc4; --blue-soft:#eaf1ff; --ink:#132845;
-  --navy:#0e2a52; --navy2:#173a68; --purple:#5b4fe0; --purple-soft:#efecff;
-  --muted:#6f8496; --line:#dce7ef; --bg:#f3f7fa; --card:#fff; --good:#2b8a66;
-  --warn:#bf7a1f; --danger:#b94a4a; --shadow:0 18px 50px rgba(14,42,82,.20);
-}
-*{box-sizing:border-box} html,body{height:100%}
-body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
-button,input,select{font:inherit} button{cursor:pointer}
-.app{min-height:100vh;display:grid;grid-template-columns:232px 1fr}
-.sidebar{background:#fff;border-right:1px solid var(--line);padding:20px 14px;position:sticky;top:0;height:100vh}
-.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;padding:4px 8px 18px}
-.brandmark{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(145deg,var(--blue),#55a7f0);color:#fff}
-.section-title{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:#91a3b2;padding:18px 11px 7px;font-weight:800}
-.nav{display:flex;flex-direction:column;gap:4px}
-.nav button{display:flex;align-items:center;gap:10px;border:0;background:transparent;color:#50697f;padding:10px 11px;border-radius:10px;text-align:left}
-.nav button.active,.nav button:hover{background:#eef6ff;color:var(--blue2);font-weight:700}
-.main{min-width:0}
-.topbar{height:68px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:5}
-.search{display:flex;align-items:center;gap:10px;background:#f7fafc;border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-width:300px;color:#7a8c9a}
-.search input{border:0;background:transparent;outline:0;width:100%}
-.user{display:flex;align-items:center;gap:10px}
-.avatar{width:35px;height:35px;border-radius:50%;background:#d9ebff;display:grid;place-items:center;color:var(--blue2);font-weight:800}
-.content{padding:28px}
-.breadcrumb{color:#8a9aaa;font-size:12px;margin-bottom:10px}
-.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:20px}
-.page-head h1{margin:0;font-size:24px}
-.page-head p{margin:7px 0 0;color:var(--muted);font-size:13px}
-.btn{border:1px solid var(--line);background:#fff;color:#34556f;padding:10px 13px;border-radius:10px;font-weight:700}
-.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
-.btn.ai{background:#f0f7ff;border-color:#bedbfa;color:#1768bd}
-.btn:disabled{opacity:.45;cursor:default}
-.toolbar,.card{background:#fff;border:1px solid var(--line);border-radius:14px}
-.toolbar{padding:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-.field{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fbfdff;color:#60788c}
-.field input,.field select{border:0;outline:0;background:transparent;color:#284760}
-.spacer{flex:1}
-.report-card{overflow:hidden}
-.report-title{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
-.report-title strong{font-size:15px}
-.table-wrap{overflow:auto}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:12px 14px;border-bottom:1px solid #edf2f6;text-align:left;white-space:nowrap}
-th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#7b8d9b;background:#f8fafc}
-tbody tr:hover{background:#f8fbff}
-.status{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;background:#eef6ff;color:#1768bd;font-size:11px;font-weight:800}
-.status.good{background:#eaf8f2;color:#2b8063}
-.status.warn{background:#fff5e8;color:#a96616}
-.selection-bar{display:none;align-items:center;gap:10px;background:#eaf4ff;border:1px solid #bfdcf7;border-radius:12px;padding:10px 12px;margin-bottom:12px}
-.selection-bar.show{display:flex}
-.selection-bar strong{font-size:13px}
-.pagination{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;color:#748898;font-size:12px}
+/* =========================================================
+   ROOT
+   ========================================================= */
 
-/* AI Launcher */
-.ai-launcher{position:fixed;right:28px;bottom:26px;z-index:30;border:1px solid var(--line);background:#fff;color:var(--blue);border-radius:18px;width:60px;height:60px;box-shadow:0 14px 36px rgba(29,115,213,.20);display:grid;place-items:center;font-size:24px;padding:0;overflow:hidden}
-.ai-launcher-logo{width:48px;height:48px;object-fit:cover;object-position:center}
-.ai-launcher-fallback{font-size:24px;color:var(--blue)}
-
-/* Chat */
-.chat{position:fixed;right:28px;bottom:98px;width:calc(min(900px,calc(100vw - 56px)) * 0.8);height:calc(100vh - 114px);max-height:calc(100vh - 114px);background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);z-index:28;display:none;overflow:hidden}
-.chat.open{display:flex;flex-direction:column}
-.chat.expanded{width:100vw;height:100vh;max-height:100vh;right:0;bottom:0;border-radius:0}
-.chat.expanded .message{font-size:16px;line-height:1.65}
-.chat.expanded .welcome h3{font-size:21px}
-.chat.expanded .welcome p{font-size:15px}
-.chat.expanded .chip{font-size:12px;padding:7px 10px}
-.chat.expanded .mini{font-size:12px;padding:8px 11px}
-.chat.expanded .chat-name{font-size:15px}
-.chat.expanded .chat-sub{font-size:12px}
-.chat-header{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;padding:14px 15px 20px;border-radius:0 0 20px 20px;box-shadow:0 8px 16px rgba(14,42,82,.28);position:relative;z-index:2}
-.chat-top{display:flex;align-items:center;gap:10px}
-.ai-logo{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);display:grid;place-items:center;font-size:18px;overflow:hidden;flex-shrink:0}
-.ai-logo img{width:100%;height:100%;object-fit:cover;object-position:center}
-.chat-name{font-size:14px;font-weight:800}.chat-sub{font-size:11px;opacity:.82;margin-top:2px}
-.chat-controls{margin-left:auto;display:flex;gap:5px}
-.icon-btn{width:32px;height:32px;border:0;border-radius:9px;background:rgba(255,255,255,.12);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.chat-body{flex:1;overflow:auto;background:#f7fafc;padding:14px;margin-top:-12px;border-radius:16px 16px 0 0;position:relative;z-index:1}
-.scope{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:9px 10px;margin-bottom:12px;font-size:11px}
-.scope strong{color:#255474}
-.scope button{border:0;background:transparent;color:var(--blue2);font-size:11px;font-weight:800}
-.panel{display:none}.panel.active{display:block}
-.welcome{background:linear-gradient(145deg,#fff,#f5faff);border:1px solid #d9e8f7;border-radius:15px;padding:14px;margin-bottom:12px}
-.welcome h3{font-size:15px;margin:0 0 6px}.welcome p{font-size:12px;color:var(--muted);margin:0}
-.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
-.quick{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;text-align:left;color:#355873}
-.quick strong{display:block;font-size:12px}.quick span{display:block;font-size:10px;color:#8294a3;margin-top:3px}
-.message{max-width:92%;margin:10px 0;font-size:12px;line-height:1.55}
-.message.bot{background:#fff;border:1px solid var(--line);border-radius:13px 13px 13px 5px;padding:10px 11px}
-.message.bot.blocked{border-color:#f2c9c2;background:#fff7f5}
-.message.bot.error{border-color:#f2c9c2;background:#fff7f5}
-.message.user{margin-left:auto;background:var(--blue);color:#fff;border-radius:13px 13px 5px 13px;padding:10px 11px}
-.msg-time{font-size:10px;color:var(--muted);margin-top:5px;opacity:.8}
-.message.user .msg-time{color:rgba(255,255,255,.75);text-align:right}
-/* Comfortable reading width when maximized -- full-width text on a wide
-   monitor is genuinely harder to read (line length matters), so center
-   a Claude/ChatGPT-style column instead of stretching bubbles edge to
-   edge. Docked mode is already narrow enough that this isn't needed. */
-.chat.expanded #conversation{max-width:820px;margin:0 auto}
-.message.thinking{display:inline-flex;gap:4px;align-items:center;padding:14px 13px}
-.message.thinking .dot{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:vdartBounce 1.2s infinite ease-in-out}
-.message.thinking .dot:nth-child(2){animation-delay:.15s}
-.message.thinking .dot:nth-child(3){animation-delay:.3s}
-@keyframes vdartBounce{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-4px);opacity:1}}
-
-/* Markdown content rendered inside bot answers (via marked.js) --
-   previously completely unstyled, relying on raw browser defaults. */
-.message.bot h1,.message.bot h2,.message.bot h3,.message.bot h4{color:var(--ink);font-weight:800;margin:12px 0 6px;line-height:1.3}
-.message.bot h1{font-size:17px}.message.bot h2{font-size:15px}.message.bot h3{font-size:14px}.message.bot h4{font-size:13px}
-.message.bot p{margin:0 0 10px}
-.message.bot p:last-child{margin-bottom:0}
-.message.bot ul,.message.bot ol{margin:0 0 10px;padding-left:20px}
-.message.bot li{margin:3px 0}
-.message.bot strong{color:var(--ink);font-weight:800}
-.message.bot code{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:11px}
-.message.bot a{color:var(--blue);font-weight:700}
-.message.bot table{border-collapse:collapse;width:100%;margin:6px 0 12px;font-size:12px;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1px var(--line)}
-.message.bot thead th{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;font-weight:800;text-align:left;padding:9px 11px;font-size:11px;letter-spacing:.02em;text-transform:uppercase}
-.message.bot tbody td{padding:8px 11px;border-top:1px solid var(--line)}
-.message.bot tbody tr:nth-child(even){background:#f7fafc}
-.message.bot tbody tr:hover{background:var(--blue-soft)}
-.message p:first-child{margin-top:0}.message p:last-child{margin-bottom:0}
-.message table{margin-top:8px;font-size:11px}
-.message th,.message td{padding:6px 8px}
-.badge-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.chip{font-size:10px;padding:6px 8px;border-radius:999px;background:#eef5fb;color:#486b84;border:1px solid #d8e5ef}
-.chip.blocked{background:#fdeceb;color:#a83f31;border-color:#f2c9c2}
-.actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.mini{border:1px solid #cfe0ee;background:#fff;color:#2c5d7d;border-radius:9px;padding:7px 8px;font-size:10px;font-weight:800}
-.mini.primary{background:#eaf4ff;border-color:#c6def7;color:#1768bd}
-.source{margin-top:9px;border-top:1px dashed #d8e5ef;padding-top:8px;color:#71879a;font-size:10px}
-.source details summary{cursor:pointer;color:#436783;font-weight:800}
-.source code{display:block;margin-top:5px;white-space:pre-wrap;word-break:break-word;background:#f7fafc;border:1px solid var(--line);border-radius:6px;padding:6px 7px;font-size:9.5px}
-.insight{border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px;margin-bottom:8px}
-.insight .eyebrow{font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:900;color:var(--blue2)}
-.insight h4{margin:4px 0 5px;font-size:12px}.insight p{margin:0;color:var(--muted);font-size:11px;line-height:1.45}
-.saved-item{display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border:1px solid var(--line);border-radius:11px;margin-bottom:8px}
-.saved-item div{flex:1}.saved-item b{font-size:12px}.saved-item span{display:block;font-size:10px;color:var(--muted);margin-top:2px}
-.chat-compose{background:#fff;border-top:1px solid var(--line);padding:10px}
-.context-row{display:flex;gap:6px;margin-bottom:7px;overflow:auto}
-.bu-toggle-row{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin-bottom:8px;cursor:pointer;user-select:none}
-.bu-toggle-row input{width:14px;height:14px;accent-color:var(--blue);cursor:pointer}
-.bu-toggle-row:has(input:checked){color:var(--blue2);font-weight:700}
-.context{flex:none;background:var(--purple-soft);border:1px solid #dcd6fb;color:var(--purple);border-radius:999px;padding:5px 8px;font-size:9px;font-weight:800}
-.compose{display:flex;gap:7px;align-items:center;border:1px solid #cfdce6;border-radius:13px;padding:6px}
-.compose input{flex:1;border:0;outline:0;padding:5px 6px;color:#284760;font-size:12px}
-.plus,.send{width:34px;height:34px;border:0;border-radius:10px}
-.plus{background:#f1f5f8;color:#60788c}.send{background:var(--blue);color:#fff}
-.send:disabled{opacity:.5}
-.disclaimer{text-align:center;color:#9aa8b3;font-size:9px;margin-top:6px}
-
-/* Expanded canvas */
-.expanded-grid{display:block}
-.chat.expanded .expanded-grid{display:block}
-.chat.expanded .expanded-grid > div:first-child{width:100%;min-width:0}
-.chat.expanded .analysis-side{display:none!important}
-.analysis-side{display:none}
-.side-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}
-.side-card h4{margin:0 0 8px;font-size:12px}
-.report-preview{display:grid;gap:7px}
-.report-line{display:flex;justify-content:space-between;font-size:10px;color:#60788c}
-.report-line b{color:#244d69}
-
-/* Modal */
-.modal{position:fixed;inset:0;background:rgba(14,34,50,.38);display:none;place-items:center;z-index:60;padding:20px}
-.modal.open{display:grid}
-.modal-card{width:min(720px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:var(--shadow)}
-.modal-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
-.modal-head h3{margin:0;font-size:16px}.modal-body{padding:18px}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.form-label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#8293a0;font-weight:800;margin-bottom:5px}
-.form-control{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;background:#fbfdff;color:#2b4d66}
-.preview{margin-top:16px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.preview-head{background:#f7fafc;padding:10px 12px;border-bottom:1px solid var(--line);font-size:11px;font-weight:800}
-.preview-empty{padding:16px;color:#8a9aaa;font-size:12px;text-align:center}
-.modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid var(--line)}
-
-.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:#18344d;color:#fff;padding:10px 14px;border-radius:10px;font-size:11px;opacity:0;pointer-events:none;transition:.2s;z-index:90}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* Login gate */
-.history-panel{position:absolute;top:56px;right:16px;width:280px;max-height:360px;overflow:auto;background:#fff;border-radius:14px;box-shadow:var(--shadow);display:none;z-index:60;border:1px solid var(--line)}
-.history-panel.open{display:block}
-.history-panel-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink)}
-.history-close-btn{width:26px;height:26px;border:0;border-radius:8px;background:var(--bg);color:var(--muted);font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.history-close-btn:hover{background:var(--line);color:var(--ink)}
-.history-list{padding:8px}
-.history-empty{padding:18px 14px;font-size:12px;color:var(--muted);text-align:center}
-.history-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px;border-radius:11px;cursor:pointer;margin-bottom:3px}
-.history-item:hover{background:#f4f7fa}
-.history-item.current{background:var(--blue-soft)}
-.history-item-main{display:flex;flex-direction:column;gap:3px;overflow:hidden;flex:1;min-width:0}
-.history-item-main b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;font-weight:700;color:var(--ink)}
-.history-item-main span{font-size:10.5px;color:var(--muted)}
-.history-item-actions{display:flex;gap:2px;flex-shrink:0}
-.history-rename-input{font-size:12.5px;font-weight:700;color:var(--ink);border:1px solid var(--blue);border-radius:6px;padding:2px 6px;width:170px;background:#fff}
-.history-delete,.history-rename{border:0;background:transparent;color:var(--muted);font-size:13px;cursor:pointer;padding:4px 6px;border-radius:6px;flex-shrink:0}
-.history-delete:hover{background:#fde8e8;color:var(--danger)}
-.history-rename:hover{background:var(--blue-soft);color:var(--blue)}
-.login-gate{position:fixed;inset:0;background:rgba(14,34,50,.5);display:none;place-items:center;z-index:100}
-.login-gate.open{display:grid}
-.login-card{width:min(380px,90vw);background:#fff;border-radius:16px;padding:22px;box-shadow:var(--shadow)}
-.login-card h3{margin:0 0 6px;font-size:16px}
-.login-card p{margin:0 0 14px;color:var(--muted);font-size:12px}
-.login-card input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;margin-bottom:10px}
-.login-error{color:var(--danger);font-size:11px;min-height:16px;margin-bottom:4px}
-
-@media(max-width:900px){
-  .app{grid-template-columns:72px 1fr}.sidebar{padding:15px 8px}.brand span,.section-title,.nav button span{display:none}.brand{justify-content:center}.nav button{justify-content:center}
-  .search{min-width:0;width:42vw}.chat.expanded{width:100vw}
-}
-@media(max-width:650px){
-  .app{display:block}.sidebar{display:none}.content{padding:16px}.topbar{padding:0 16px}.search{display:none}
-  .page-head{display:block}.page-head .btn{margin-top:12px}.toolbar{align-items:stretch}.toolbar .field{width:100%}.spacer{display:none}
-  .chat,.chat.expanded{right:10px;bottom:84px;width:calc(100vw - 20px);height:calc(100vh - 104px);max-height:none;border-radius:18px}
-  .chat.expanded .expanded-grid{display:block}.analysis-side{display:none!important}
-  .ai-launcher{right:16px;bottom:16px}.form-grid{grid-template-columns:1fr}
-}
-
-
-/* ================= ENHANCED VDART AI UX ================= */
 :root{
   --blue:#2563eb;
   --blue2:#1d4ed8;
-  --blue3:#0f3f9d;
-  --blue-soft:#eef5ff;
-  --ink:#10233f;
-  --muted:#6b7f95;
-  --line:#d9e4ef;
+  --blue3:#123e78;
+
+  --navy:#102f5b;
+  --navy2:#173f78;
+
+  --purple:#6756e8;
+
+  --green:#168a62;
+  --orange:#d47b17;
+  --red:#d94c63;
+
+  --ink:#122a46;
+  --muted:#71859a;
+
+  --line:#dbe5ef;
+  --line2:#e8eef4;
+
   --bg:#eef3f8;
-  --card:#ffffff;
-  --shadow:0 20px 55px rgba(15,44,89,.16);
-  --shadow-soft:0 8px 24px rgba(15,44,89,.08);
-}
-body{background:linear-gradient(180deg,#f6f9fc 0%,#edf3f8 100%)}
+  --soft-blue:#eef5ff;
+  --soft-purple:#f2efff;
+  --soft-green:#edf9f5;
+  --soft-red:#fff0f2;
 
-/* App shell */
-.sidebar{box-shadow:8px 0 24px rgba(15,44,89,.03)}
-.brandmark{box-shadow:0 8px 18px rgba(37,99,235,.22)}
-.topbar{backdrop-filter:blur(10px);background:rgba(255,255,255,.92)}
-.content{max-width:1440px;margin:0 auto;width:100%}
-.card,.toolbar{box-shadow:var(--shadow-soft)}
+  --white:#ffffff;
 
-/* Launcher */
-.ai-launcher{width:58px;height:58px;border-radius:18px;border:1px solid #d4e1ef;box-shadow:0 16px 35px rgba(37,99,235,.28);transition:.2s ease}
-.ai-launcher:hover{transform:translateY(-2px);box-shadow:0 18px 38px rgba(37,99,235,.34)}
+  --shadow:
+    0 24px 60px rgba(15,44,89,.16);
 
-/* Chat shell */
-.chat{
-  right:22px;
-  bottom:22px;
-  width:min(860px,calc(100vw - 44px));
-  height:min(720px,calc(100vh - 44px));
-  max-height:calc(100vh - 44px);
-  border-radius:22px;
-  border:1px solid #cfdeea;
-  box-shadow:0 24px 70px rgba(15,44,89,.24);
-  background:#f5f8fb;
+  --shadow-soft:
+    0 8px 24px rgba(15,44,89,.07);
 }
-.chat.expanded{width:100vw;height:100vh;max-height:100vh;right:0;bottom:0;border:0;border-radius:0;background:#f4f7fa}
-.chat-header{
-  padding:12px 14px;
-  border-radius:22px 22px 0 0;
-  background:linear-gradient(118deg,#123e78 0%,#2158b8 55%,#2f6fed 100%);
-  box-shadow:none;
-  min-height:72px;
-  display:flex;
-  align-items:center;
-}
-.chat.expanded .chat-header{border-radius:0;min-height:76px;padding:12px 18px;box-shadow:0 1px 0 rgba(255,255,255,.14)}
-.chat-top{width:100%}
-.ai-logo{width:42px;height:42px;border-radius:13px;background:#fff;border-color:rgba(255,255,255,.55);box-shadow:0 6px 16px rgba(0,0,0,.10)}
-.chat-name{font-size:15px;font-weight:800;letter-spacing:-.01em}
-.chat-sub{font-size:11px;opacity:.88}
-.icon-btn{width:34px;height:34px;border-radius:10px;transition:.15s ease}
-.icon-btn:hover{background:rgba(255,255,255,.2);transform:translateY(-1px)}
 
-.chat-body{
-  margin-top:0;
-  border-radius:0;
-  background:linear-gradient(180deg,#f6f9fc 0%,#f2f6fa 100%);
-  padding:0;
-  display:flex;
-  flex-direction:column;
+*{
+  box-sizing:border-box;
 }
-.scope{
+
+html,
+body{
+  height:100%;
+}
+
+body{
   margin:0;
-  padding:9px 16px;
+
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+
+  background:
+    linear-gradient(
+      180deg,
+      #f7f9fc 0%,
+      #eef3f8 100%
+    );
+
+  color:var(--ink);
+}
+
+button,
+input,
+select{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+button:disabled{
+  opacity:.5;
+  cursor:default;
+}
+
+
+/* =========================================================
+   APP LAYOUT
+   ========================================================= */
+
+.app{
+  min-height:100vh;
+
+  display:grid;
+
+  grid-template-columns:
+    232px
+    minmax(0,1fr);
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.sidebar{
+  height:100vh;
+
+  position:sticky;
+  top:0;
+
+  padding:20px 14px;
+
+  background:#fff;
+
+  border-right:1px solid var(--line);
+
+  box-shadow:
+    8px 0 24px rgba(15,44,89,.025);
+}
+
+.brand{
+  display:flex;
+
+  align-items:center;
+
+  gap:10px;
+
+  padding:
+    4px
+    8px
+    20px;
+
+  font-size:18px;
+
+  font-weight:800;
+
+  color:#183c65;
+}
+
+.brandmark{
+  width:36px;
+  height:36px;
+
+  flex-shrink:0;
+
+  display:grid;
+
+  place-items:center;
+
+  border-radius:11px;
+
+  color:#fff;
+
+  font-weight:900;
+
+  background:
+    linear-gradient(
+      145deg,
+      #2563eb,
+      #54a7ee
+    );
+
+  box-shadow:
+    0 8px 18px rgba(37,99,235,.22);
+}
+
+.section-title{
+  padding:
+    18px
+    11px
+    7px;
+
+  color:#91a3b2;
+
+  font-size:10px;
+
+  font-weight:900;
+
+  letter-spacing:.1em;
+
+  text-transform:uppercase;
+}
+
+.nav{
+  display:flex;
+
+  flex-direction:column;
+
+  gap:4px;
+}
+
+.nav button{
+  width:100%;
+
+  display:flex;
+
+  align-items:center;
+
+  gap:11px;
+
+  padding:
+    10px
+    11px;
+
   border:0;
+
+  border-radius:10px;
+
+  background:transparent;
+
+  color:#536d83;
+
+  text-align:left;
+
+  transition:
+    background .16s ease,
+    color .16s ease,
+    transform .16s ease;
+}
+
+.nav button b{
+  width:18px;
+
+  display:grid;
+
+  place-items:center;
+
+  font-size:15px;
+}
+
+.nav button:hover{
+  transform:translateX(2px);
+
+  background:#f3f7fc;
+
+  color:#255da9;
+}
+
+.nav button.active{
+  color:#1d4ed8;
+
+  font-weight:700;
+
+  background:
+    linear-gradient(
+      135deg,
+      #eaf3ff,
+      #f2f5ff
+    );
+
+  box-shadow:
+    inset 3px 0 0 #2563eb;
+}
+
+
+/* =========================================================
+   MAIN
+   ========================================================= */
+
+.main{
+  min-width:0;
+}
+
+.topbar{
+  height:68px;
+
+  position:sticky;
+  top:0;
+
+  z-index:5;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  padding:
+    0
+    28px;
+
   border-bottom:1px solid var(--line);
-  border-radius:0;
-  background:rgba(255,255,255,.82);
-  backdrop-filter:blur(8px);
-  min-height:42px;
+
+  background:
+    rgba(255,255,255,.94);
+
+  backdrop-filter:blur(10px);
 }
-.scope span{color:#60788e}.scope strong{color:#193f6f}
-.scope button{background:#f4f7fb;border:1px solid #dce6ef;padding:5px 9px;border-radius:8px}
 
-#chatPanel{flex:1;min-height:0;overflow:auto;padding:24px 18px 28px}
-.chat.expanded #chatPanel{padding:32px 22px 40px}
-.chat.expanded #conversation,#conversation{max-width:860px;margin:0 auto;width:100%}
+.search{
+  min-width:300px;
 
-/* Empty state / quick actions */
-.quick-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:8px 0 18px}
-.quick{
-  position:relative;
-  min-height:82px;
-  padding:14px 15px;
+  display:flex;
+
+  align-items:center;
+
+  gap:9px;
+
+  padding:
+    9px
+    12px;
+
+  border:1px solid var(--line);
+
+  border-radius:11px;
+
+  color:#7b8e9f;
+
+  background:#f8fafc;
+}
+
+.search input{
+  width:100%;
+
+  border:0;
+
+  outline:0;
+
+  color:#294965;
+
+  background:transparent;
+}
+
+.user{
+  display:flex;
+
+  align-items:center;
+
+  gap:10px;
+}
+
+.avatar{
+  width:36px;
+  height:36px;
+
+  display:grid;
+
+  place-items:center;
+
+  border-radius:50%;
+
+  color:#1d4ed8;
+
+  font-weight:800;
+
+  background:#dcecff;
+}
+
+.content{
+  width:100%;
+
+  max-width:1440px;
+
+  margin:
+    0
+    auto;
+
+  padding:28px;
+}
+
+.breadcrumb{
+  margin-bottom:10px;
+
+  color:#8a9aaa;
+
+  font-size:12px;
+}
+
+.page-head{
+  display:flex;
+
+  align-items:flex-start;
+
+  justify-content:space-between;
+
+  gap:20px;
+
+  margin-bottom:20px;
+}
+
+.page-head h1{
+  margin:0;
+
+  color:#132e4c;
+
+  font-size:25px;
+
+  letter-spacing:-.02em;
+}
+
+.page-head p{
+  max-width:780px;
+
+  margin:
+    7px
+    0
+    0;
+
+  color:var(--muted);
+
+  font-size:13px;
+
+  line-height:1.6;
+}
+
+
+/* =========================================================
+   GENERAL BUTTONS
+   ========================================================= */
+
+.btn{
+  display:inline-flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  gap:7px;
+
+  padding:
+    10px
+    13px;
+
+  border:1px solid var(--line);
+
+  border-radius:10px;
+
+  background:#fff;
+
+  color:#34556f;
+
+  font-weight:700;
+
+  transition:
+    transform .16s ease,
+    background .16s ease,
+    color .16s ease,
+    border-color .16s ease,
+    box-shadow .16s ease;
+}
+
+.btn:hover:not(:disabled){
+  transform:translateY(-1px);
+
+  background:#f6f9fc;
+
+  border-color:#c6d7e7;
+}
+
+.btn.primary{
+  color:#fff;
+
+  border-color:#2563eb;
+
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #2e70ed
+    );
+}
+
+.btn.primary:hover:not(:disabled){
+  color:#fff;
+
+  border-color:#1d56ca;
+
+  background:
+    linear-gradient(
+      135deg,
+      #1d56ca,
+      #2563eb
+    );
+
+  box-shadow:
+    0 7px 18px rgba(37,99,235,.22);
+}
+
+.btn.ai{
+  color:#285bb2;
+
+  border-color:#cbdafa;
+
+  background:
+    linear-gradient(
+      135deg,
+      #eef5ff,
+      #f2efff
+    );
+
+  box-shadow:
+    0 4px 12px rgba(37,99,235,.06);
+}
+
+.btn.ai:hover:not(:disabled){
+  color:#fff;
+
+  border-color:#6756e8;
+
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #6756e8
+    );
+
+  box-shadow:
+    0 7px 18px rgba(78,85,203,.2);
+}
+
+
+/* =========================================================
+   REPORT TOOLBAR
+   ========================================================= */
+
+.toolbar,
+.card{
+  border:1px solid var(--line);
+
   border-radius:14px;
-  background:rgba(255,255,255,.96);
-  border:1px solid #d9e5f0;
-  box-shadow:0 5px 16px rgba(16,35,63,.05);
-  transition:.18s ease;
-}
-.quick:hover{transform:translateY(-2px);border-color:#b8cff0;box-shadow:0 10px 24px rgba(37,99,235,.10);background:#fff}
-.quick strong{font-size:13px;color:#24476c}
-.quick span{font-size:11px;color:#8294a7;margin-top:5px}
 
-/* Message layout */
-.message{max-width:82%;font-size:13px;line-height:1.58;margin:14px 0}
-.message.bot{
   background:#fff;
-  border:1px solid #dbe6ef;
-  border-radius:16px 16px 16px 6px;
-  padding:13px 14px;
-  box-shadow:0 5px 16px rgba(15,44,89,.05);
-}
-.message.user{
-  background:linear-gradient(135deg,#2563eb,#2f6fed);
-  border-radius:16px 16px 6px 16px;
-  padding:12px 14px;
-  box-shadow:0 7px 18px rgba(37,99,235,.18);
-}
-.message.thinking{background:#fff}
-.actions{margin-top:11px}.mini{border-radius:9px;padding:7px 10px;font-size:10.5px}.chip{font-size:10px}
-.msg-time{font-size:9.5px}
 
-/* Composer */
-.chat-compose{
-  padding:10px 14px 12px;
-  border-top:1px solid var(--line);
-  background:rgba(255,255,255,.96);
-  backdrop-filter:blur(12px);
+  box-shadow:var(--shadow-soft);
 }
-.context-row{margin-bottom:6px}.context{padding:4px 8px;font-size:9px}
-.bu-toggle-row{margin-bottom:7px}
-.compose{
-  border:1px solid #c9d9e8;
-  border-radius:15px;
-  padding:7px 7px 7px 8px;
-  background:#fff;
-  box-shadow:0 8px 22px rgba(16,35,63,.06);
-}
-.compose:focus-within{border-color:#7ba6ef;box-shadow:0 0 0 3px rgba(37,99,235,.08),0 8px 22px rgba(16,35,63,.06)}
-.compose input{font-size:13px;padding:7px 8px}
-.plus,.send{width:36px;height:36px;border-radius:10px}
-.send{background:linear-gradient(135deg,#2563eb,#2f6fed);box-shadow:0 6px 14px rgba(37,99,235,.2)}
-.disclaimer{font-size:8.5px;margin-top:7px}
 
-/* History */
-.history-panel{
-  top:62px;
-  right:14px;
-  width:310px;
-  max-height:420px;
-  border-radius:15px;
-  box-shadow:0 20px 46px rgba(15,44,89,.24);
-  border:1px solid #d6e1ec;
+.toolbar{
+  display:flex;
+
+  align-items:center;
+
+  gap:10px;
+
+  flex-wrap:wrap;
+
+  margin-bottom:16px;
+
+  padding:14px;
+}
+
+.field{
+  display:flex;
+
+  align-items:center;
+
+  gap:8px;
+
+  padding:
+    8px
+    10px;
+
+  border:1px solid var(--line);
+
+  border-radius:10px;
+
+  background:#fbfdff;
+
+  color:#60788c;
+}
+
+.field input,
+.field select{
+  border:0;
+
+  outline:0;
+
+  color:#284760;
+
+  background:transparent;
+}
+
+.spacer{
+  flex:1;
+}
+
+
+/* =========================================================
+   REPORT TABLE
+   ========================================================= */
+
+.report-card{
   overflow:hidden;
 }
-.history-list{padding:9px;max-height:360px;overflow:auto;background:#fbfdff}
-.history-item{padding:11px 12px;border:1px solid transparent}
-.history-item:hover{border-color:#dfe8f1;background:#f5f8fc}
-.history-item.current{background:#eaf2ff;border-color:#d7e5fb}
 
-/* Full-screen usability: persistent conversation list */
-.chat.expanded .history-panel.open{
-  position:fixed;
-  top:76px;
-  left:0;
-  right:auto;
-  bottom:0;
-  width:290px;
-  max-height:none;
-  border-radius:0;
-  border-left:0;
-  border-bottom:0;
-  box-shadow:8px 0 24px rgba(15,44,89,.08);
+.report-title{
   display:flex;
-  flex-direction:column;
-}
-.chat.expanded .history-panel.open .history-list{max-height:none;flex:1}
-.chat.expanded:has(.history-panel.open) #chatPanel{padding-left:312px;transition:padding .2s ease}
-.chat.expanded:has(.history-panel.open) .chat-compose{padding-left:304px;transition:padding .2s ease}
-.chat.expanded:has(.history-panel.open) .scope{padding-left:306px;transition:padding .2s ease}
 
-/* Subtle empty-state intro */
-#conversation:has(.quick-grid)::before{
-  content:"Ask about candidates, recruiters, clients, roll-offs, or build a staffing report.";
-  display:block;
-  max-width:650px;
-  margin:8px auto 18px;
-  text-align:center;
-  color:#6f8397;
+  align-items:center;
+
+  justify-content:space-between;
+
+  padding:
+    16px
+    18px;
+
+  border-bottom:1px solid var(--line);
+}
+
+.report-title strong{
+  font-size:15px;
+}
+
+.table-wrap{
+  overflow:auto;
+}
+
+table{
+  width:100%;
+
+  border-collapse:collapse;
+
   font-size:13px;
 }
 
-@media(max-width:760px){
-  .chat{right:10px;bottom:10px;width:calc(100vw - 20px);height:calc(100vh - 20px);max-height:none}
-  .quick-grid{grid-template-columns:1fr}
-  .message{max-width:92%}
-  .chat.expanded:has(.history-panel.open) #chatPanel,
-  .chat.expanded:has(.history-panel.open) .chat-compose,
-  .chat.expanded:has(.history-panel.open) .scope{padding-left:inherit}
-  .chat.expanded .history-panel.open{left:10px;right:10px;top:82px;bottom:auto;width:auto;max-height:55vh;border-radius:14px;border:1px solid var(--line);box-shadow:var(--shadow)}
+th,
+td{
+  padding:
+    12px
+    14px;
+
+  border-bottom:1px solid #edf2f6;
+
+  white-space:nowrap;
+
+  text-align:left;
 }
 
+th{
+  color:#7b8d9b;
+
+  background:#f8fafc;
+
+  font-size:11px;
+
+  font-weight:800;
+
+  letter-spacing:.04em;
+
+  text-transform:uppercase;
+}
+
+tbody tr:hover{
+  background:#f8fbff;
+}
+
+.status{
+  display:inline-flex;
+
+  align-items:center;
+
+  padding:
+    5px
+    8px;
+
+  border-radius:999px;
+
+  color:#1768bd;
+
+  background:#eef6ff;
+
+  font-size:11px;
+
+  font-weight:800;
+}
+
+.status.good{
+  color:#2b8063;
+
+  background:#eaf8f2;
+}
+
+.status.warn{
+  color:#a96616;
+
+  background:#fff5e8;
+}
+
+.pagination{
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  padding:
+    12px
+    16px;
+
+  color:#748898;
+
+  font-size:12px;
+}
+
+
+/* =========================================================
+   SELECTION
+   ========================================================= */
+
+.selection-bar{
+  display:none;
+
+  align-items:center;
+
+  gap:10px;
+
+  margin-bottom:12px;
+
+  padding:
+    10px
+    12px;
+
+  border:1px solid #bfdcf7;
+
+  border-radius:12px;
+
+  background:#eaf4ff;
+}
+
+.selection-bar.show{
+  display:flex;
+}
+
+.selection-bar strong{
+  font-size:13px;
+}
+
+
+/* =========================================================
+   AI LAUNCHER
+   ========================================================= */
+
+.ai-launcher{
+  position:fixed;
+
+  right:26px;
+  bottom:24px;
+
+  z-index:30;
+
+  width:60px;
+  height:60px;
+
+  display:grid;
+
+  place-items:center;
+
+  padding:0;
+
+  overflow:hidden;
+
+  border:1px solid #d4e1ef;
+
+  border-radius:18px;
+
+  color:#2563eb;
+
+  background:#fff;
+
+  box-shadow:
+    0 16px 38px rgba(37,99,235,.28);
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease;
+}
+
+.ai-launcher:hover{
+  transform:
+    translateY(-3px)
+    scale(1.02);
+
+  box-shadow:
+    0 20px 44px rgba(37,99,235,.34);
+}
+
+.ai-launcher-logo{
+  width:49px;
+  height:49px;
+
+  object-fit:cover;
+
+  object-position:center;
+
+  border-radius:14px;
+}
+
+.ai-launcher-fallback{
+  color:#2563eb;
+
+  font-size:24px;
+}
+
+
+/* =========================================================
+   CHAT SHELL
+   ========================================================= */
+
+.chat{
+  position:fixed;
+
+  right:22px;
+  bottom:22px;
+
+  z-index:28;
+
+  width:min(
+    860px,
+    calc(100vw - 44px)
+  );
+
+  height:min(
+    720px,
+    calc(100vh - 44px)
+  );
+
+  max-height:
+    calc(100vh - 44px);
+
+  display:none;
+
+  overflow:hidden;
+
+  border:1px solid #cfdeea;
+
+  border-radius:22px;
+
+  background:#f5f8fb;
+
+  box-shadow:
+    0 28px 78px rgba(15,44,89,.25);
+}
+
+.chat.open{
+  display:flex;
+
+  flex-direction:column;
+}
+
+.chat.expanded{
+  right:0;
+  bottom:0;
+
+  width:100vw;
+  height:100vh;
+
+  max-height:100vh;
+
+  border:0;
+  border-radius:0;
+
+  background:#f4f7fa;
+}
+
+
+/* =========================================================
+   CHAT HEADER
+   ========================================================= */
+
+.chat-header{
+  min-height:78px;
+
+  position:relative;
+
+  z-index:5;
+
+  display:flex;
+
+  align-items:center;
+
+  padding:
+    13px
+    16px;
+
+  color:#fff;
+
+  border-radius:
+    22px
+    22px
+    0
+    0;
+
+  background:
+    radial-gradient(
+      circle at 85% 0%,
+      rgba(126,164,255,.38),
+      transparent 32%
+    ),
+    linear-gradient(
+      118deg,
+      #10396f 0%,
+      #1c57b5 55%,
+      #2d6dec 100%
+    );
+}
+
+.chat.expanded .chat-header{
+  min-height:80px;
+
+  border-radius:0;
+}
+
+.chat-top{
+  width:100%;
+
+  display:flex;
+
+  align-items:center;
+
+  gap:11px;
+}
+
+.ai-logo{
+  width:45px;
+  height:45px;
+
+  flex-shrink:0;
+
+  display:grid;
+
+  place-items:center;
+
+  overflow:hidden;
+
+  border:1px solid rgba(255,255,255,.48);
+
+  border-radius:14px;
+
+  background:#fff;
+
+  box-shadow:
+    0 8px 20px rgba(0,0,0,.14);
+}
+
+.ai-logo img{
+  width:100%;
+  height:100%;
+
+  object-fit:cover;
+}
+
+.chat-name{
+  color:#fff;
+
+  font-size:15.5px;
+
+  font-weight:800;
+
+  letter-spacing:-.01em;
+}
+
+.connection-status{
+  display:flex;
+
+  align-items:center;
+
+  gap:6px;
+
+  margin-top:4px;
+
+  color:rgba(255,255,255,.81);
+
+  font-size:10.5px;
+}
+
+.connection-dot{
+  width:7px;
+  height:7px;
+
+  border-radius:50%;
+
+  background:#59dda2;
+
+  box-shadow:
+    0 0 0 4px rgba(89,221,162,.13);
+}
+
+
+/* =========================================================
+   HEADER CONTROL BUTTONS
+   ========================================================= */
+
+.chat-controls{
+  margin-left:auto;
+
+  display:flex;
+
+  align-items:center;
+
+  gap:6px;
+}
+
+.icon-btn{
+  width:36px;
+  height:36px;
+
+  display:grid;
+
+  place-items:center;
+
+  padding:0;
+
+  border:
+    1px solid
+    rgba(255,255,255,.16);
+
+  border-radius:11px;
+
+  color:#fff;
+
+  background:
+    rgba(255,255,255,.10);
+
+  transition:
+    transform .17s ease,
+    background .17s ease,
+    border-color .17s ease,
+    box-shadow .17s ease;
+}
+
+.icon-btn svg{
+  width:17px;
+  height:17px;
+
+  pointer-events:none;
+}
+
+.icon-btn:hover{
+  transform:translateY(-2px);
+}
+
+.icon-btn.new-chat:hover{
+  border-color:#1c9a6e;
+
+  background:#1c9a6e;
+
+  box-shadow:
+    0 7px 18px rgba(28,154,110,.34);
+}
+
+.icon-btn.history-btn:hover{
+  border-color:#6855df;
+
+  background:#6855df;
+
+  box-shadow:
+    0 7px 18px rgba(104,85,223,.34);
+}
+
+.icon-btn.expand-btn:hover{
+  border-color:#2c83e9;
+
+  background:#2c83e9;
+
+  box-shadow:
+    0 7px 18px rgba(44,131,233,.35);
+}
+
+.icon-btn.close-chat-btn:hover{
+  border-color:#dc4c64;
+
+  background:#dc4c64;
+
+  box-shadow:
+    0 7px 18px rgba(220,76,100,.35);
+}
+
+
+/* =========================================================
+   CHAT BODY
+   ========================================================= */
+
+.chat-body{
+  flex:1;
+
+  min-height:0;
+
+  display:flex;
+
+  flex-direction:column;
+
+  overflow:hidden;
+
+  background:
+    linear-gradient(
+      180deg,
+      #f6f9fc 0%,
+      #f2f6fa 100%
+    );
+}
+
+
+/* =========================================================
+   SCOPE
+   ========================================================= */
+
+.scope{
+  min-height:45px;
+
+  flex-shrink:0;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:10px;
+
+  margin:0;
+
+  padding:
+    8px
+    17px;
+
+  border:0;
+
+  border-bottom:1px solid #dde7ef;
+
+  border-radius:0;
+
+  background:
+    rgba(255,255,255,.94);
+
+  font-size:11px;
+}
+
+.scope span{
+  display:flex;
+
+  align-items:center;
+
+  gap:6px;
+
+  color:#718398;
+}
+
+.scope span::before{
+  content:"";
+
+  width:7px;
+  height:7px;
+
+  border-radius:50%;
+
+  background:#29a676;
+
+  box-shadow:
+    0 0 0 4px rgba(41,166,118,.10);
+}
+
+.scope strong{
+  color:#244d79;
+}
+
+.scope button{
+  padding:
+    6px
+    10px;
+
+  border:1px solid #e0e7ee;
+
+  border-radius:8px;
+
+  color:#677d91;
+
+  background:#f7f9fc;
+
+  font-size:11px;
+
+  font-weight:700;
+
+  transition:.15s ease;
+}
+
+.scope button:hover{
+  color:#c73c55;
+
+  border-color:#f3c7ce;
+
+  background:#fff0f2;
+}
+
+
+/* =========================================================
+   CHAT PANEL
+   ========================================================= */
+
+.panel{
+  display:none;
+}
+
+.panel.active{
+  display:block;
+}
+
+#chatPanel{
+  flex:1;
+
+  min-height:0;
+
+  overflow:auto;
+
+  padding:
+    24px
+    18px
+    30px;
+}
+
+.chat.expanded #chatPanel{
+  padding:
+    32px
+    22px
+    40px;
+}
+
+#conversation{
+  width:100%;
+
+  max-width:860px;
+
+  margin:
+    0
+    auto;
+}
+
+
+/* =========================================================
+   WELCOME
+   ========================================================= */
+
+.welcome.ai-welcome{
+  position:relative;
+
+  overflow:hidden;
+
+  margin:
+    5px
+    0
+    20px;
+
+  padding:
+    28px
+    24px
+    25px;
+
+  text-align:center;
+
+  border:1px solid #d8e5f3;
+
+  border-radius:20px;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(46,111,237,.10),
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      rgba(103,86,232,.10),
+      transparent 35%
+    ),
+    linear-gradient(
+      145deg,
+      #fff,
+      #f8fbff
+    );
+
+  box-shadow:
+    0 10px 28px rgba(22,61,104,.06);
+}
+
+.ai-welcome::after{
+  content:"";
+
+  position:absolute;
+
+  top:-90px;
+  right:-80px;
+
+  width:140px;
+  height:140px;
+
+  border-radius:50%;
+
+  background:
+    rgba(45,109,236,.08);
+}
+
+.ai-intro-icon{
+  width:49px;
+  height:49px;
+
+  position:relative;
+
+  z-index:1;
+
+  display:grid;
+
+  place-items:center;
+
+  margin:
+    0
+    auto
+    13px;
+
+  border-radius:15px;
+
+  color:#fff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #6a5be7
+    );
+
+  box-shadow:
+    0 10px 24px rgba(37,99,235,.23);
+}
+
+.ai-intro-icon svg{
+  width:24px;
+  height:24px;
+}
+
+.ai-eyebrow{
+  position:relative;
+
+  z-index:1;
+
+  margin-bottom:7px;
+
+  color:#3264bd;
+
+  font-size:10px;
+
+  font-weight:900;
+
+  letter-spacing:.12em;
+
+  text-transform:uppercase;
+}
+
+.ai-welcome h3{
+  position:relative;
+
+  z-index:1;
+
+  margin:0;
+
+  color:#122e51;
+
+  font-size:21px;
+
+  letter-spacing:-.025em;
+}
+
+.ai-welcome p{
+  max-width:660px;
+
+  position:relative;
+
+  z-index:1;
+
+  margin:
+    8px
+    auto
+    0;
+
+  color:#708398;
+
+  font-size:12.5px;
+
+  line-height:1.6;
+}
+
+
+/* =========================================================
+   QUICK ACTION CARDS
+   ========================================================= */
+
+.quick-grid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0,1fr)
+    );
+
+  gap:12px;
+
+  margin:
+    8px
+    0
+    18px;
+}
+
+.quick{
+  min-height:96px;
+
+  position:relative;
+
+  display:flex;
+
+  align-items:flex-start;
+
+  gap:12px;
+
+  padding:14px;
+
+  border:1px solid #dce6ef;
+
+  border-radius:16px;
+
+  background:#fff;
+
+  color:#355873;
+
+  text-align:left;
+
+  box-shadow:
+    0 5px 16px rgba(17,45,78,.035);
+
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    background .18s ease,
+    box-shadow .18s ease;
+}
+
+.quick:hover{
+  transform:translateY(-3px);
+
+  border-color:#b9d1f4;
+
+  background:#fbfdff;
+
+  box-shadow:
+    0 12px 28px rgba(37,99,235,.10);
+}
+
+.quick-icon{
+  width:40px;
+  height:40px;
+
+  flex:0 0 auto;
+
+  display:grid;
+
+  place-items:center;
+
+  border-radius:12px;
+
+  color:#2563eb;
+
+  background:#eef5ff;
+
+  transition:
+    background .18s ease,
+    color .18s ease,
+    transform .18s ease;
+}
+
+.quick-icon svg{
+  width:19px;
+  height:19px;
+}
+
+.quick:hover .quick-icon{
+  transform:scale(1.05);
+
+  color:#fff;
+
+  background:#2563eb;
+}
+
+.quick-content{
+  min-width:0;
+
+  text-align:left;
+}
+
+.quick strong{
+  display:block;
+
+  margin-top:1px;
+
+  color:#21466c;
+
+  font-size:12.8px;
+}
+
+.quick span{
+  display:block;
+
+  margin-top:4px;
+
+  color:#7b8fa3;
+
+  font-size:10.5px;
+
+  line-height:1.45;
+}
+
+.quick.report-quick .quick-icon{
+  color:#6756e8;
+
+  background:#f0edff;
+}
+
+.quick.report-quick:hover{
+  border-color:#ccc3fa;
+}
+
+.quick.report-quick:hover .quick-icon{
+  color:#fff;
+
+  background:#6756e8;
+}
+
+
+/* =========================================================
+   MESSAGES
+   ========================================================= */
+
+.message{
+  max-width:82%;
+
+  margin:
+    14px
+    0;
+
+  font-size:13px;
+
+  line-height:1.62;
+}
+
+.message.bot{
+  padding:
+    14px
+    15px;
+
+  border:1px solid #dae5ee;
+
+  border-radius:
+    17px
+    17px
+    17px
+    6px;
+
+  background:#fff;
+
+  box-shadow:
+    0 5px 15px rgba(21,50,84,.045);
+}
+
+.message.user{
+  margin-left:auto;
+
+  padding:
+    12px
+    15px;
+
+  border-radius:
+    17px
+    17px
+    6px
+    17px;
+
+  color:#fff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #245fda,
+      #2e72ee
+    );
+
+  box-shadow:
+    0 8px 20px rgba(37,99,235,.18);
+}
+
+.message.bot.blocked,
+.message.bot.error{
+  border-color:#f1c7ce;
+
+  background:#fff7f7;
+}
+
+.msg-time{
+  margin-top:6px;
+
+  color:#8c9dab;
+
+  font-size:9.5px;
+}
+
+.message.user .msg-time{
+  color:rgba(255,255,255,.75);
+
+  text-align:right;
+}
+
+
+/* =========================================================
+   THINKING
+   ========================================================= */
+
+.message.thinking{
+  display:inline-flex;
+
+  align-items:center;
+
+  gap:4px;
+
+  width:auto;
+
+  padding:
+    14px
+    13px;
+}
+
+.message.thinking .dot{
+  width:6px;
+  height:6px;
+
+  border-radius:50%;
+
+  background:#7b8e9e;
+
+  animation:
+    vdartBounce
+    1.2s
+    infinite
+    ease-in-out;
+}
+
+.message.thinking .dot:nth-child(2){
+  animation-delay:.15s;
+}
+
+.message.thinking .dot:nth-child(3){
+  animation-delay:.3s;
+}
+
+@keyframes vdartBounce{
+  0%,
+  80%,
+  100%{
+    transform:translateY(0);
+
+    opacity:.4;
+  }
+
+  40%{
+    transform:translateY(-4px);
+
+    opacity:1;
+  }
+}
+
+
+/* =========================================================
+   MARKDOWN
+   ========================================================= */
+
+.message.bot h1,
+.message.bot h2,
+.message.bot h3,
+.message.bot h4{
+  margin:
+    12px
+    0
+    6px;
+
+  color:#132c49;
+
+  font-weight:800;
+
+  line-height:1.3;
+}
+
+.message.bot h1{
+  font-size:17px;
+}
+
+.message.bot h2{
+  font-size:15px;
+}
+
+.message.bot h3{
+  font-size:14px;
+}
+
+.message.bot h4{
+  font-size:13px;
+}
+
+.message.bot p{
+  margin:
+    0
+    0
+    10px;
+}
+
+.message.bot p:last-child{
+  margin-bottom:0;
+}
+
+.message.bot ul,
+.message.bot ol{
+  margin:
+    0
+    0
+    10px;
+
+  padding-left:20px;
+}
+
+.message.bot li{
+  margin:
+    3px
+    0;
+}
+
+.message.bot strong{
+  color:#132c49;
+
+  font-weight:800;
+}
+
+.message.bot code{
+  padding:
+    1px
+    5px;
+
+  border:1px solid var(--line);
+
+  border-radius:5px;
+
+  background:#f4f7fa;
+
+  font-size:11px;
+}
+
+.message.bot a{
+  color:#2563eb;
+
+  font-weight:700;
+}
+
+.message.bot table{
+  width:100%;
+
+  overflow:hidden;
+
+  margin:
+    8px
+    0
+    12px;
+
+  border-collapse:collapse;
+
+  border-radius:10px;
+
+  font-size:12px;
+
+  box-shadow:
+    0 0 0 1px var(--line);
+}
+
+.message.bot thead th{
+  padding:
+    9px
+    11px;
+
+  color:#fff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #153d70,
+      #205296
+    );
+
+  font-size:10px;
+
+  font-weight:800;
+
+  letter-spacing:.02em;
+
+  text-transform:uppercase;
+}
+
+.message.bot tbody td{
+  padding:
+    8px
+    11px;
+
+  border-top:1px solid var(--line);
+}
+
+.message.bot tbody tr:nth-child(even){
+  background:#f7fafc;
+}
+
+.message.bot tbody tr:hover{
+  background:#eef5ff;
+}
+
+
+/* =========================================================
+   CHIPS
+   ========================================================= */
+
+.badge-row{
+  display:flex;
+
+  flex-wrap:wrap;
+
+  gap:6px;
+
+  margin-top:8px;
+}
+
+.chip{
+  padding:
+    6px
+    8px;
+
+  border:1px solid #d8e5ef;
+
+  border-radius:999px;
+
+  color:#486b84;
+
+  background:#eef5fb;
+
+  font-size:10px;
+}
+
+.chip.blocked{
+  color:#a83f31;
+
+  border-color:#f2c9c2;
+
+  background:#fdeceb;
+}
+
+
+/* =========================================================
+   MESSAGE ACTIONS
+   ========================================================= */
+
+.actions{
+  display:flex;
+
+  flex-wrap:wrap;
+
+  gap:7px;
+
+  margin-top:11px;
+}
+
+.mini{
+  min-height:31px;
+
+  display:inline-flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  gap:5px;
+
+  padding:
+    6px
+    10px;
+
+  border:1px solid #d6e2ec;
+
+  border-radius:9px;
+
+  color:#4d6b84;
+
+  background:#fff;
+
+  font-size:10.5px;
+
+  font-weight:800;
+
+  transition:
+    transform .15s ease,
+    border-color .15s ease,
+    background .15s ease,
+    color .15s ease;
+}
+
+.mini:hover:not(:disabled){
+  transform:translateY(-1px);
+
+  color:#2563eb;
+
+  border-color:#b8d2f6;
+
+  background:#eef5ff;
+}
+
+.mini.primary{
+  color:#1765cf;
+
+  border-color:#c7ddfa;
+
+  background:#ecf4ff;
+}
+
+.mini.primary:hover:not(:disabled){
+  color:#fff;
+
+  border-color:#2563eb;
+
+  background:#2563eb;
+
+  box-shadow:
+    0 5px 14px rgba(37,99,235,.2);
+}
+
+
+/* =========================================================
+   HISTORY
+   ========================================================= */
+
+.history-panel{
+  position:absolute;
+
+  top:64px;
+  right:14px;
+
+  z-index:60;
+
+  width:330px;
+
+  max-height:430px;
+
+  display:none;
+
+  overflow:hidden;
+
+  border:1px solid #d5e0eb;
+
+  border-radius:18px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #f4f7ff 0%,
+      #f8f9fd 100%
+    );
+
+  box-shadow:
+    0 24px 58px rgba(15,44,89,.26);
+}
+
+.history-panel.open{
+  display:block;
+}
+
+.history-panel-head{
+  min-height:58px;
+
+  position:sticky;
+
+  top:0;
+
+  z-index:2;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  padding:
+    12px
+    14px;
+
+  border-bottom:1px solid #dbe4ef;
+
+  background:
+    linear-gradient(
+      135deg,
+      #edf4ff,
+      #f3efff
+    );
+}
+
+.history-panel-title{
+  display:flex;
+
+  align-items:center;
+
+  gap:9px;
+
+  color:#22496f;
+
+  font-size:13px;
+
+  font-weight:800;
+}
+
+.history-head-icon{
+  width:29px;
+  height:29px;
+
+  display:grid;
+
+  place-items:center;
+
+  border-radius:9px;
+
+  color:#6557d8;
+
+  background:#e4e7ff;
+}
+
+.history-head-icon svg{
+  width:16px;
+  height:16px;
+}
+
+.history-close-btn{
+  width:30px;
+  height:30px;
+
+  display:grid;
+
+  place-items:center;
+
+  padding:0;
+
+  border:1px solid #d7e0eb;
+
+  border-radius:8px;
+
+  color:#74869a;
+
+  background:rgba(255,255,255,.7);
+
+  transition:.15s ease;
+}
+
+.history-close-btn:hover{
+  color:#fff;
+
+  border-color:#d94c63;
+
+  background:#d94c63;
+}
+
+.history-list{
+  max-height:365px;
+
+  overflow:auto;
+
+  padding:10px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #f7f9ff 0%,
+      #fbfcfe 100%
+    );
+}
+
+.history-empty{
+  margin:
+    14px
+    6px;
+
+  padding:
+    24px
+    15px;
+
+  border:1px dashed #cedbeb;
+
+  border-radius:13px;
+
+  color:#778a9f;
+
+  background:rgba(255,255,255,.65);
+
+  font-size:12px;
+
+  text-align:center;
+}
+
+.history-item{
+  position:relative;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:8px;
+
+  margin-bottom:6px;
+
+  padding:
+    11px
+    10px
+    11px
+    12px;
+
+  border:1px solid transparent;
+
+  border-radius:13px;
+
+  background:rgba(255,255,255,.72);
+
+  cursor:pointer;
+
+  transition:
+    transform .16s ease,
+    border-color .16s ease,
+    background .16s ease,
+    box-shadow .16s ease;
+}
+
+.history-item:hover{
+  transform:translateX(2px);
+
+  border-color:#cfdeed;
+
+  background:#fff;
+
+  box-shadow:
+    0 5px 16px rgba(28,61,98,.06);
+}
+
+.history-item.current{
+  border-color:#c9d9f8;
+
+  background:
+    linear-gradient(
+      135deg,
+      #e9f2ff,
+      #efedff
+    );
+
+  box-shadow:
+    inset 3px 0 0 #2563eb;
+}
+
+.history-item-main{
+  min-width:0;
+
+  flex:1;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:3px;
+
+  overflow:hidden;
+}
+
+.history-item-main b{
+  max-width:185px;
+
+  overflow:hidden;
+
+  color:#284d70;
+
+  font-size:12.5px;
+
+  font-weight:700;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+}
+
+.history-item-main span{
+  color:#8a9aac;
+
+  font-size:10px;
+}
+
+.history-item-actions{
+  display:flex;
+
+  gap:3px;
+
+  flex-shrink:0;
+}
+
+.history-rename,
+.history-delete{
+  width:28px;
+  height:28px;
+
+  display:grid;
+
+  place-items:center;
+
+  padding:0;
+
+  border:0;
+
+  border-radius:8px;
+
+  color:#75879a;
+
+  background:transparent;
+
+  transition:.15s ease;
+}
+
+.history-rename:hover{
+  color:#6756e8;
+
+  background:#efedff;
+}
+
+.history-delete:hover{
+  color:#d64860;
+
+  background:#fff0f2;
+}
+
+.history-rename-input{
+  width:170px;
+
+  padding:
+    3px
+    6px;
+
+  border:1px solid #2563eb;
+
+  border-radius:6px;
+
+  outline:0;
+
+  color:#223f5f;
+
+  background:#fff;
+
+  font-size:12.5px;
+
+  font-weight:700;
+}
+
+
+/* =========================================================
+   FULL SCREEN HISTORY
+   ========================================================= */
+
+.chat.expanded .history-panel.open{
+  position:fixed;
+
+  top:80px;
+  left:0;
+  right:auto;
+  bottom:0;
+
+  width:300px;
+
+  max-height:none;
+
+  display:flex;
+
+  flex-direction:column;
+
+  border-left:0;
+  border-bottom:0;
+
+  border-radius:0;
+
+  background:
+    linear-gradient(
+      180deg,
+      #f2f6ff,
+      #f8f9fe
+    );
+
+  box-shadow:
+    8px 0 24px rgba(15,44,89,.08);
+}
+
+.chat.expanded .history-panel.open .history-list{
+  flex:1;
+
+  max-height:none;
+}
+
+.chat.expanded:has(.history-panel.open) #chatPanel{
+  padding-left:324px;
+}
+
+.chat.expanded:has(.history-panel.open) .chat-compose{
+  padding-left:316px;
+}
+
+.chat.expanded:has(.history-panel.open) .scope{
+  padding-left:318px;
+}
+
+
+/* =========================================================
+   COMPOSER
+   ========================================================= */
+
+.chat-compose{
+  flex-shrink:0;
+
+  padding:
+    10px
+    14px
+    12px;
+
+  border-top:1px solid #dce6ee;
+
+  background:
+    rgba(255,255,255,.97);
+
+  backdrop-filter:blur(12px);
+}
+
+.context-row{
+  display:flex;
+
+  gap:6px;
+
+  margin-bottom:7px;
+
+  overflow:auto;
+}
+
+.context{
+  flex:none;
+
+  padding:
+    5px
+    9px;
+
+  border:1px solid #ddd6ff;
+
+  border-radius:999px;
+
+  color:#6253d7;
+
+  background:#f0edff;
+
+  font-size:9px;
+
+  font-weight:800;
+}
+
+.bu-toggle-row{
+  width:max-content;
+
+  display:flex;
+
+  align-items:center;
+
+  gap:6px;
+
+  margin-bottom:7px;
+
+  padding:
+    4px
+    7px
+    4px
+    4px;
+
+  border-radius:8px;
+
+  color:#73879a;
+
+  font-size:11px;
+
+  cursor:pointer;
+
+  user-select:none;
+
+  transition:.15s ease;
+}
+
+.bu-toggle-row:hover{
+  background:#f3f7fc;
+}
+
+.bu-toggle-row input{
+  width:14px;
+  height:14px;
+
+  accent-color:#2563eb;
+
+  cursor:pointer;
+}
+
+.bu-toggle-row:has(input:checked){
+  color:#1d4ed8;
+
+  font-weight:700;
+}
+
+.compose{
+  min-height:54px;
+
+  display:flex;
+
+  align-items:center;
+
+  gap:7px;
+
+  padding:7px;
+
+  border:1px solid #cad9e7;
+
+  border-radius:16px;
+
+  background:#fff;
+
+  box-shadow:
+    0 8px 22px rgba(22,49,80,.055);
+
+  transition:
+    border-color .16s ease,
+    box-shadow .16s ease;
+}
+
+.compose:focus-within{
+  border-color:#75a3ef;
+
+  box-shadow:
+    0 0 0 3px rgba(37,99,235,.08),
+    0 10px 25px rgba(22,49,80,.06);
+}
+
+.compose input{
+  flex:1;
+
+  min-width:0;
+
+  padding:
+    7px
+    9px;
+
+  border:0;
+
+  outline:0;
+
+  color:#284760;
+
+  background:transparent;
+
+  font-size:13px;
+}
+
+.compose input::placeholder{
+  color:#9aa9b7;
+}
+
+.plus,
+.send{
+  width:38px;
+  height:38px;
+
+  flex-shrink:0;
+
+  display:grid;
+
+  place-items:center;
+
+  padding:0;
+
+  border-radius:11px;
+
+  transition:
+    transform .17s ease,
+    color .17s ease,
+    background .17s ease,
+    border-color .17s ease,
+    box-shadow .17s ease;
+}
+
+.plus{
+  border:1px solid transparent;
+
+  color:#6e8193;
+
+  background:#f1f5f8;
+}
+
+.plus:hover{
+  transform:rotate(5deg);
+
+  color:#6756e8;
+
+  border-color:#dcd4ff;
+
+  background:#efedff;
+}
+
+.send{
+  border:0;
+
+  color:#fff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #326feb
+    );
+
+  box-shadow:
+    0 7px 16px rgba(37,99,235,.22);
+}
+
+.send:hover:not(:disabled){
+  transform:
+    translateY(-1px)
+    scale(1.03);
+
+  background:
+    linear-gradient(
+      135deg,
+      #1e56ce,
+      #2563eb
+    );
+
+  box-shadow:
+    0 9px 20px rgba(37,99,235,.28);
+}
+
+.plus svg,
+.send svg{
+  width:17px;
+  height:17px;
+}
+
+.disclaimer{
+  margin-top:7px;
+
+  color:#9aa8b3;
+
+  font-size:8.5px;
+
+  text-align:center;
+}
+
+
+/* =========================================================
+   SIDE INFO
+   ========================================================= */
+
+.expanded-grid{
+  display:block;
+}
+
+.analysis-side{
+  display:none;
+}
+
+.side-card{
+  padding:12px;
+
+  border:1px solid var(--line);
+
+  border-radius:14px;
+
+  background:#fff;
+}
+
+.side-card h4{
+  margin:
+    0
+    0
+    8px;
+
+  font-size:12px;
+}
+
+.report-preview{
+  display:grid;
+
+  gap:7px;
+}
+
+.report-line{
+  display:flex;
+
+  justify-content:space-between;
+
+  gap:10px;
+
+  color:#60788c;
+
+  font-size:10px;
+}
+
+.report-line b{
+  max-width:68%;
+
+  color:#244d69;
+
+  text-align:right;
+}
+
+
+/* =========================================================
+   MODAL
+   ========================================================= */
+
+.modal{
+  position:fixed;
+
+  inset:0;
+
+  z-index:60;
+
+  display:none;
+
+  place-items:center;
+
+  padding:20px;
+
+  background:
+    rgba(14,34,50,.38);
+
+  backdrop-filter:blur(4px);
+}
+
+.modal.open{
+  display:grid;
+}
+
+.modal-card{
+  width:min(
+    720px,
+    100%
+  );
+
+  max-height:90vh;
+
+  overflow:auto;
+
+  border:1px solid #dce5ed;
+
+  border-radius:18px;
+
+  background:#fff;
+
+  box-shadow:var(--shadow);
+}
+
+.modal-head{
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  padding:
+    16px
+    18px;
+
+  border-bottom:1px solid var(--line);
+
+  background:
+    linear-gradient(
+      135deg,
+      #f6f9ff,
+      #fbfaff
+    );
+}
+
+.modal-head h3{
+  margin:0;
+
+  color:#1c426d;
+
+  font-size:16px;
+}
+
+.modal-body{
+  padding:18px;
+}
+
+.form-grid{
+  display:grid;
+
+  grid-template-columns:
+    1fr
+    1fr;
+
+  gap:12px;
+}
+
+.form-label{
+  margin-bottom:5px;
+
+  color:#8293a0;
+
+  font-size:10px;
+
+  font-weight:800;
+
+  letter-spacing:.07em;
+
+  text-transform:uppercase;
+}
+
+.form-control{
+  width:100%;
+
+  padding:10px;
+
+  border:1px solid var(--line);
+
+  border-radius:10px;
+
+  outline:0;
+
+  color:#2b4d66;
+
+  background:#fbfdff;
+}
+
+.form-control:focus{
+  border-color:#8fb2ed;
+
+  box-shadow:
+    0 0 0 3px rgba(37,99,235,.07);
+}
+
+.preview{
+  overflow:hidden;
+
+  margin-top:16px;
+
+  border:1px solid var(--line);
+
+  border-radius:12px;
+}
+
+.preview-head{
+  padding:
+    10px
+    12px;
+
+  border-bottom:1px solid var(--line);
+
+  color:#355978;
+
+  background:#f7fafc;
+
+  font-size:11px;
+
+  font-weight:800;
+}
+
+.preview-empty{
+  padding:20px;
+
+  color:#8a9aaa;
+
+  font-size:12px;
+
+  text-align:center;
+}
+
+.modal-actions{
+  display:flex;
+
+  justify-content:flex-end;
+
+  gap:8px;
+
+  padding:
+    14px
+    18px;
+
+  border-top:1px solid var(--line);
+}
+
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+
+.login-gate{
+  position:fixed;
+
+  inset:0;
+
+  z-index:100;
+
+  display:none;
+
+  place-items:center;
+
+  padding:20px;
+
+  background:
+    rgba(14,34,50,.52);
+
+  backdrop-filter:blur(5px);
+}
+
+.login-gate.open{
+  display:grid;
+}
+
+.login-card{
+  width:min(
+    390px,
+    92vw
+  );
+
+  padding:24px;
+
+  border:1px solid #dbe5ef;
+
+  border-radius:18px;
+
+  background:#fff;
+
+  box-shadow:var(--shadow);
+}
+
+.login-brand{
+  width:45px;
+  height:45px;
+
+  display:grid;
+
+  place-items:center;
+
+  margin-bottom:14px;
+
+  border-radius:14px;
+
+  color:#fff;
+
+  font-weight:900;
+
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #6756e8
+    );
+
+  box-shadow:
+    0 8px 20px rgba(37,99,235,.23);
+}
+
+.login-card h3{
+  margin:
+    0
+    0
+    6px;
+
+  color:#183a61;
+
+  font-size:18px;
+}
+
+.login-card p{
+  margin:
+    0
+    0
+    16px;
+
+  color:var(--muted);
+
+  font-size:12px;
+
+  line-height:1.55;
+}
+
+.login-card input{
+  width:100%;
+
+  margin-bottom:10px;
+
+  padding:11px;
+
+  border:1px solid var(--line);
+
+  border-radius:10px;
+
+  outline:0;
+
+  color:#294963;
+}
+
+.login-card input:focus{
+  border-color:#7ea8ef;
+
+  box-shadow:
+    0 0 0 3px rgba(37,99,235,.08);
+}
+
+.login-error{
+  min-height:16px;
+
+  margin-bottom:4px;
+
+  color:#c84559;
+
+  font-size:11px;
+}
+
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+
+.toast{
+  position:fixed;
+
+  left:50%;
+  bottom:28px;
+
+  z-index:90;
+
+  padding:
+    10px
+    14px;
+
+  pointer-events:none;
+
+  opacity:0;
+
+  border-radius:10px;
+
+  color:#fff;
+
+  background:#18344d;
+
+  box-shadow:
+    0 8px 25px rgba(13,42,66,.2);
+
+  font-size:11px;
+
+  transform:
+    translateX(-50%)
+    translateY(20px);
+
+  transition:.2s;
+}
+
+.toast.show{
+  opacity:1;
+
+  transform:
+    translateX(-50%)
+    translateY(0);
+}
+
+
+/* =========================================================
+   SCROLLBARS
+   ========================================================= */
+
+#chatPanel::-webkit-scrollbar,
+.history-list::-webkit-scrollbar,
+.table-wrap::-webkit-scrollbar{
+  width:7px;
+  height:7px;
+}
+
+#chatPanel::-webkit-scrollbar-thumb,
+.history-list::-webkit-scrollbar-thumb,
+.table-wrap::-webkit-scrollbar-thumb{
+  border-radius:20px;
+
+  background:#c7d4e1;
+}
+
+#chatPanel::-webkit-scrollbar-thumb:hover,
+.history-list::-webkit-scrollbar-thumb:hover{
+  background:#aebed0;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media(max-width:900px){
+
+  .app{
+    grid-template-columns:
+      72px
+      1fr;
+  }
+
+  .sidebar{
+    padding:
+      15px
+      8px;
+  }
+
+  .brand span,
+  .section-title,
+  .nav button span{
+    display:none;
+  }
+
+  .brand{
+    justify-content:center;
+  }
+
+  .nav button{
+    justify-content:center;
+  }
+
+  .search{
+    width:42vw;
+
+    min-width:0;
+  }
+}
+
+
+@media(max-width:760px){
+
+  .quick-grid{
+    grid-template-columns:1fr;
+  }
+
+  .quick{
+    min-height:82px;
+  }
+
+  .message{
+    max-width:92%;
+  }
+
+  .chat.expanded:has(.history-panel.open) #chatPanel,
+  .chat.expanded:has(.history-panel.open) .chat-compose,
+  .chat.expanded:has(.history-panel.open) .scope{
+    padding-left:inherit;
+  }
+
+  .chat.expanded .history-panel.open{
+    top:82px;
+    left:10px;
+    right:10px;
+    bottom:auto;
+
+    width:auto;
+
+    max-height:55vh;
+
+    border:1px solid var(--line);
+
+    border-radius:14px;
+
+    box-shadow:var(--shadow);
+  }
+}
+
+
+@media(max-width:650px){
+
+  .app{
+    display:block;
+  }
+
+  .sidebar{
+    display:none;
+  }
+
+  .content{
+    padding:16px;
+  }
+
+  .topbar{
+    padding:
+      0
+      16px;
+  }
+
+  .search{
+    display:none;
+  }
+
+  .page-head{
+    display:block;
+  }
+
+  .page-head .btn{
+    margin-top:12px;
+  }
+
+  .toolbar{
+    align-items:stretch;
+  }
+
+  .toolbar .field{
+    width:100%;
+  }
+
+  .spacer{
+    display:none;
+  }
+
+  .chat,
+  .chat.expanded{
+    right:10px;
+    bottom:10px;
+
+    width:
+      calc(100vw - 20px);
+
+    height:
+      calc(100vh - 20px);
+
+    max-height:none;
+
+    border-radius:18px;
+  }
+
+  .chat.expanded .chat-header{
+    border-radius:
+      18px
+      18px
+      0
+      0;
+  }
+
+  .chat-header{
+    padding:
+      12px
+      11px;
+  }
+
+  .chat-name{
+    font-size:13px;
+  }
+
+  .connection-status{
+    font-size:9px;
+  }
+
+  .chat-controls{
+    gap:3px;
+  }
+
+  .icon-btn{
+    width:31px;
+    height:31px;
+  }
+
+  .ai-launcher{
+    right:16px;
+    bottom:16px;
+  }
+
+  .form-grid{
+    grid-template-columns:1fr;
+  }
+
+  .ai-welcome h3{
+    font-size:18px;
+  }
+}
 </style>
 </head>
+
+
 <body>
+
 <div class="app">
+
+  <!-- =====================================================
+       SIDEBAR
+       ===================================================== -->
+
   <aside class="sidebar">
-    <div class="brand"><div class="brandmark">V</div><span>VDart Staffing</span></div>
-    <div class="section-title">Staffing</div>
+
+    <div class="brand">
+
+      <div class="brandmark">
+        V
+      </div>
+
+      <span>
+        VDart Staffing
+      </span>
+
+    </div>
+
+
+    <div class="section-title">
+      Staffing
+    </div>
+
+
     <nav class="nav">
-      <button><b>⌂</b><span>Dashboard</span></button>
-      <button><b>◉</b><span>Candidates</span></button>
-      <button><b>▣</b><span>Clients</span></button>
-      <button><b>♙</b><span>Recruiters</span></button>
-      <button><b>◫</b><span>Interviews</span></button>
-      <button><b>↻</b><span>Roll-Offs</span></button>
-      <button class="active"><b>▤</b><span>Reports</span></button>
+
+      <button>
+        <b>⌂</b>
+        <span>Dashboard</span>
+      </button>
+
+      <button>
+        <b>◉</b>
+        <span>Candidates</span>
+      </button>
+
+      <button>
+        <b>▣</b>
+        <span>Clients</span>
+      </button>
+
+      <button>
+        <b>♙</b>
+        <span>Recruiters</span>
+      </button>
+
+      <button>
+        <b>◫</b>
+        <span>Interviews</span>
+      </button>
+
+      <button>
+        <b>↻</b>
+        <span>Roll-Offs</span>
+      </button>
+
+      <button class="active">
+        <b>▤</b>
+        <span>Reports</span>
+      </button>
+
     </nav>
-    <div class="section-title">Employee</div>
+
+
+    <div class="section-title">
+      Employee
+    </div>
+
+
     <nav class="nav">
-      <button><b>✓</b><span>Paperwork</span></button>
-      <button><b>⚙</b><span>Settings</span></button>
+
+      <button>
+        <b>✓</b>
+        <span>Paperwork</span>
+      </button>
+
+      <button>
+        <b>⚙</b>
+        <span>Settings</span>
+      </button>
+
     </nav>
+
   </aside>
 
+
+  <!-- =====================================================
+       MAIN
+       ===================================================== -->
+
   <main class="main">
+
     <header class="topbar">
-      <div class="search">⌕ <input placeholder="Search staffing records" /></div>
-      <div class="user"><span id="topbarLogin" style="font-size:12px;color:#71879a">Not signed in</span><div class="avatar" id="topbarAvatar">?</div></div>
+
+      <div class="search">
+
+        <span>⌕</span>
+
+        <input
+          placeholder="Search staffing records"
+        />
+
+      </div>
+
+
+      <div class="user">
+
+        <span
+          id="topbarLogin"
+          style="
+            font-size:12px;
+            color:#71879a;
+          "
+        >
+          Not signed in
+        </span>
+
+        <div
+          class="avatar"
+          id="topbarAvatar"
+        >
+          ?
+        </div>
+
+      </div>
+
     </header>
 
+
     <section class="content">
-      <div class="breadcrumb">Staffing / Reports / Candidate Report</div>
-      <div class="page-head">
-        <div>
-          <h1>Candidate Report</h1>
-          <p>This demo table below is static sample UI, not live data -- ask VDart AI (bottom right) for real, permission-scoped answers from the actual database.</p>
-        </div>
-        <button class="btn ai" onclick="openReportBuilder()">✦ Build with VDart AI</button>
+
+      <div class="breadcrumb">
+        Staffing / Reports / Candidate Report
       </div>
+
+
+      <div class="page-head">
+
+        <div>
+
+          <h1>
+            Candidate Intelligence Report
+          </h1>
+
+          <p>
+            Review staffing activity or use VDart Staffing Intelligence
+            for permission-scoped analysis across candidates,
+            recruiters, clients, placements and roll-offs.
+          </p>
+
+        </div>
+
+
+        <button
+          class="btn ai"
+          onclick="openReportBuilder()"
+        >
+          ✦ Build with VDart AI
+        </button>
+
+      </div>
+
+
+      <!-- =================================================
+           REPORT FILTERS
+           ================================================= -->
 
       <div class="toolbar">
-        <div class="field">From <input type="date" value="2026-09-01"/></div>
-        <div class="field">To <input type="date" value="2026-09-07"/></div>
-        <div class="field">Status
-          <select><option>All</option><option>Submitted</option><option>Interview</option><option>Placed</option></select>
+
+        <div class="field">
+
+          From
+
+          <input
+            type="date"
+            value="2026-09-01"
+          />
+
         </div>
+
+
+        <div class="field">
+
+          To
+
+          <input
+            type="date"
+            value="2026-09-07"
+          />
+
+        </div>
+
+
+        <div class="field">
+
+          Status
+
+          <select>
+
+            <option>
+              All
+            </option>
+
+            <option>
+              Submitted
+            </option>
+
+            <option>
+              Interview
+            </option>
+
+            <option>
+              Placed
+            </option>
+
+          </select>
+
+        </div>
+
+
         <div class="spacer"></div>
-        <button class="btn">Reset</button>
-        <button class="btn primary" onclick="toast('This demo table is static UI -- ask VDart AI for a real, live answer instead')">Generate Report</button>
+
+
+        <button class="btn">
+          Reset
+        </button>
+
+
+        <button
+          class="btn primary"
+          onclick="toast('This table is sample UI. Ask VDart AI for live staffing information.')"
+        >
+          Generate Report
+        </button>
+
       </div>
 
-      <div id="selectionBar" class="selection-bar">
-        <strong id="selectionText">0 candidates selected</strong>
+
+      <!-- =================================================
+           SELECTION
+           ================================================= -->
+
+      <div
+        id="selectionBar"
+        class="selection-bar"
+      >
+
+        <strong id="selectionText">
+          0 candidates selected
+        </strong>
+
+
         <div class="spacer"></div>
-        <button class="btn ai" onclick="askSelection()">✦ Ask AI about selection</button>
-        <button class="btn" onclick="clearSelection()">Clear</button>
+
+
+        <button
+          class="btn ai"
+          onclick="askSelection()"
+        >
+          ✦ Ask AI about selection
+        </button>
+
+
+        <button
+          class="btn"
+          onclick="clearSelection()"
+        >
+          Clear
+        </button>
+
       </div>
+
+
+      <!-- =================================================
+           SAMPLE TABLE
+           ================================================= -->
 
       <div class="card report-card">
+
         <div class="report-title">
-          <strong>Candidate Activity (static sample data)</strong>
-          <span style="font-size:11px;color:#8293a0">Demo rows only</span>
+
+          <strong>
+            Candidate Activity
+          </strong>
+
+          <span
+            style="
+              font-size:11px;
+              color:#8293a0;
+            "
+          >
+            Sample dashboard rows
+          </span>
+
         </div>
+
+
         <div class="table-wrap">
+
           <table>
-            <thead><tr>
-              <th><input id="selectAll" type="checkbox" onchange="toggleAll(this)"/></th>
-              <th>Candidate</th><th>Skill</th><th>Client</th><th>Recruiter</th><th>Status</th><th>Submitted</th>
-            </tr></thead>
+
+            <thead>
+
+              <tr>
+
+                <th>
+                  <input
+                    id="selectAll"
+                    type="checkbox"
+                    onchange="toggleAll(this)"
+                  />
+                </th>
+
+                <th>Candidate</th>
+                <th>Skill</th>
+                <th>Client</th>
+                <th>Recruiter</th>
+                <th>Status</th>
+                <th>Submitted</th>
+
+              </tr>
+
+            </thead>
+
+
             <tbody>
-              <tr><td><input class="rowcheck" type="checkbox" onchange="selectionChanged()"/></td><td>Aarav Mehta</td><td>Java</td><td>Apex Systems</td><td>Priya Shah</td><td><span class="status">Interview</span></td><td>Sep 2</td></tr>
-              <tr><td><input class="rowcheck" type="checkbox" onchange="selectionChanged()"/></td><td>Maya Patel</td><td>Data Engineering</td><td>Northstar Labs</td><td>Daniel Roy</td><td><span class="status">Submitted</span></td><td>Sep 3</td></tr>
-              <tr><td><input class="rowcheck" type="checkbox" onchange="selectionChanged()"/></td><td>Noah Williams</td><td>Cloud</td><td>Meridian Health</td><td>Priya Shah</td><td><span class="status warn">Awaiting Feedback</span></td><td>Sep 3</td></tr>
-              <tr><td><input class="rowcheck" type="checkbox" onchange="selectionChanged()"/></td><td>Sophia Chen</td><td>QA Automation</td><td>Bluepeak Tech</td><td>Elena Cruz</td><td><span class="status">Interview</span></td><td>Sep 4</td></tr>
-              <tr><td><input class="rowcheck" type="checkbox" onchange="selectionChanged()"/></td><td>Ethan Brown</td><td>DevOps</td><td>Apex Systems</td><td>Daniel Roy</td><td><span class="status good">Placed</span></td><td>Sep 5</td></tr>
-              <tr><td><input class="rowcheck" type="checkbox" onchange="selectionChanged()"/></td><td>Isha Rao</td><td>React</td><td>Northstar Labs</td><td>Priya Shah</td><td><span class="status">Submitted</span></td><td>Sep 6</td></tr>
+
+              <tr>
+
+                <td>
+                  <input
+                    class="rowcheck"
+                    type="checkbox"
+                    onchange="selectionChanged()"
+                  />
+                </td>
+
+                <td>Aarav Mehta</td>
+
+                <td>Java</td>
+
+                <td>Apex Systems</td>
+
+                <td>Priya Shah</td>
+
+                <td>
+                  <span class="status">
+                    Interview
+                  </span>
+                </td>
+
+                <td>Sep 2</td>
+
+              </tr>
+
+
+              <tr>
+
+                <td>
+                  <input
+                    class="rowcheck"
+                    type="checkbox"
+                    onchange="selectionChanged()"
+                  />
+                </td>
+
+                <td>Maya Patel</td>
+
+                <td>Data Engineering</td>
+
+                <td>Northstar Labs</td>
+
+                <td>Daniel Roy</td>
+
+                <td>
+                  <span class="status">
+                    Submitted
+                  </span>
+                </td>
+
+                <td>Sep 3</td>
+
+              </tr>
+
+
+              <tr>
+
+                <td>
+                  <input
+                    class="rowcheck"
+                    type="checkbox"
+                    onchange="selectionChanged()"
+                  />
+                </td>
+
+                <td>Noah Williams</td>
+
+                <td>Cloud</td>
+
+                <td>Meridian Health</td>
+
+                <td>Priya Shah</td>
+
+                <td>
+                  <span class="status warn">
+                    Awaiting Feedback
+                  </span>
+                </td>
+
+                <td>Sep 3</td>
+
+              </tr>
+
+
+              <tr>
+
+                <td>
+                  <input
+                    class="rowcheck"
+                    type="checkbox"
+                    onchange="selectionChanged()"
+                  />
+                </td>
+
+                <td>Sophia Chen</td>
+
+                <td>QA Automation</td>
+
+                <td>Bluepeak Tech</td>
+
+                <td>Elena Cruz</td>
+
+                <td>
+                  <span class="status">
+                    Interview
+                  </span>
+                </td>
+
+                <td>Sep 4</td>
+
+              </tr>
+
+
+              <tr>
+
+                <td>
+                  <input
+                    class="rowcheck"
+                    type="checkbox"
+                    onchange="selectionChanged()"
+                  />
+                </td>
+
+                <td>Ethan Brown</td>
+
+                <td>DevOps</td>
+
+                <td>Apex Systems</td>
+
+                <td>Daniel Roy</td>
+
+                <td>
+                  <span class="status good">
+                    Placed
+                  </span>
+                </td>
+
+                <td>Sep 5</td>
+
+              </tr>
+
+
+              <tr>
+
+                <td>
+                  <input
+                    class="rowcheck"
+                    type="checkbox"
+                    onchange="selectionChanged()"
+                  />
+                </td>
+
+                <td>Isha Rao</td>
+
+                <td>React</td>
+
+                <td>Northstar Labs</td>
+
+                <td>Priya Shah</td>
+
+                <td>
+                  <span class="status">
+                    Submitted
+                  </span>
+                </td>
+
+                <td>Sep 6</td>
+
+              </tr>
+
             </tbody>
+
           </table>
+
         </div>
-        <div class="pagination"><span>Static sample -- not paginated live data</span><span></span></div>
+
+
+        <div class="pagination">
+
+          <span>
+            Sample staffing activity
+          </span>
+
+          <span></span>
+
+        </div>
+
       </div>
+
     </section>
+
   </main>
+
 </div>
+
+
+
+<!-- =========================================================
+     AI LAUNCHER
+     ========================================================= -->
 
 <button
   id="vdartAiLauncher"
   class="ai-launcher"
   onclick="toggleChat()"
-  aria-label="Open VDart Staffing AI"
+  aria-label="Open VDart Staffing Intelligence"
   title="Ask VDart AI"
 >
+
   <img
     src="/static/images.jfif"
     alt="VDart AI"
     class="ai-launcher-logo"
-    onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+    onerror="
+      this.style.display='none';
+      this.nextElementSibling.style.display='block';
+    "
   />
-  <span class="ai-launcher-fallback" style="display:none">✦</span>
+
+  <span
+    class="ai-launcher-fallback"
+    style="display:none"
+  >
+    ✦
+  </span>
+
 </button>
 
-<section id="chat" class="chat" aria-label="VDart Staffing AI">
+
+
+<!-- =========================================================
+     CHAT
+     ========================================================= -->
+
+<section
+  id="chat"
+  class="chat"
+  aria-label="VDart Staffing Intelligence"
+>
+
+
+  <!-- =====================================================
+       CHAT HEADER
+       ===================================================== -->
+
   <div class="chat-header">
+
     <div class="chat-top">
-      <div class="ai-logo"><img src="/static/images.jfif" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span style="display:none">✦</span></div>
-      <div><div class="chat-name">VDart Staffing AI</div><div class="chat-sub">● Connected · Permission aware · Read-only</div></div>
-      <div class="chat-controls">
-        <button class="icon-btn" title="New chat" onclick="newChat()">＋</button>
-        <button class="icon-btn" title="Saved chats" onclick="toggleHistoryPanel()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13a9 9 0 1 0 2.13-6.36L3 8"/><path d="M12 7v5l3 3"/></svg></button>
-        <button class="icon-btn" title="Expand" onclick="toggleExpand()">↗</button>
-        <button class="icon-btn" title="Close" onclick="toggleChat()">×</button>
+
+
+      <div class="ai-logo">
+
+        <img
+          src="/static/images.jfif"
+          alt=""
+          onerror="
+            this.style.display='none';
+            this.nextElementSibling.style.display='grid';
+          "
+        />
+
+        <span
+          style="
+            display:none;
+            place-items:center;
+          "
+        >
+          ✦
+        </span>
+
       </div>
+
+
+      <div>
+
+        <div class="chat-name">
+          VDart Staffing Intelligence
+        </div>
+
+        <div class="connection-status">
+
+          <span class="connection-dot"></span>
+
+          <span>
+            Connected · Permission scoped · Read-only
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- ===============================================
+           HEADER ACTIONS
+           =============================================== -->
+
+      <div class="chat-controls">
+
+
+        <!-- NEW CHAT -->
+
+        <button
+          class="icon-btn new-chat"
+          title="Start new chat"
+          aria-label="Start new chat"
+          onclick="newChat()"
+        >
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+
+            <path d="M12 5v14"></path>
+
+            <path d="M5 12h14"></path>
+
+          </svg>
+
+        </button>
+
+
+        <!-- HISTORY -->
+
+        <button
+          class="icon-btn history-btn"
+          title="Conversation history"
+          aria-label="Conversation history"
+          onclick="toggleHistoryPanel()"
+        >
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+
+            <path d="M3 3v5h5"></path>
+
+            <path
+              d="M3.05 13a9 9 0 1 0 2.13-6.36L3 8"
+            ></path>
+
+            <path d="M12 7v5l3 3"></path>
+
+          </svg>
+
+        </button>
+
+
+        <!-- EXPAND -->
+
+        <button
+          class="icon-btn expand-btn"
+          title="Expand workspace"
+          aria-label="Expand workspace"
+          onclick="toggleExpand()"
+        >
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+
+            <path d="M15 3h6v6"></path>
+
+            <path d="M9 21H3v-6"></path>
+
+            <path d="M21 3l-7 7"></path>
+
+            <path d="M3 21l7-7"></path>
+
+          </svg>
+
+        </button>
+
+
+        <!-- CLOSE -->
+
+        <button
+          class="icon-btn close-chat-btn"
+          title="Close assistant"
+          aria-label="Close assistant"
+          onclick="toggleChat()"
+        >
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+
+            <path d="M18 6 6 18"></path>
+
+            <path d="m6 6 12 12"></path>
+
+          </svg>
+
+        </button>
+
+      </div>
+
     </div>
 
-    <div id="historyPanel" class="history-panel">
+
+
+    <!-- =================================================
+         HISTORY
+         ================================================= -->
+
+    <div
+      id="historyPanel"
+      class="history-panel"
+    >
+
       <div class="history-panel-head">
-        <b>Saved chats</b>
-        <button class="history-close-btn" title="Close" onclick="closeHistoryPanel()">×</button>
+
+        <div class="history-panel-title">
+
+          <span class="history-head-icon">
+
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+
+              <path d="M3 3v5h5"></path>
+
+              <path
+                d="M3.05 13a9 9 0 1 0 2.13-6.36L3 8"
+              ></path>
+
+              <path d="M12 7v5l3 3"></path>
+
+            </svg>
+
+          </span>
+
+
+          <span>
+            Conversation History
+          </span>
+
+        </div>
+
+
+        <button
+          class="history-close-btn"
+          title="Close history"
+          onclick="closeHistoryPanel()"
+        >
+
+          <svg
+            viewBox="0 0 24 24"
+            width="14"
+            height="14"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+
+            <path d="M18 6 6 18"></path>
+
+            <path d="m6 6 12 12"></path>
+
+          </svg>
+
+        </button>
+
       </div>
-      <div id="historyList" class="history-list"></div>
+
+
+      <div
+        id="historyList"
+        class="history-list"
+      ></div>
+
     </div>
+
   </div>
+
+
+
+  <!-- =====================================================
+       CHAT BODY
+       ===================================================== -->
 
   <div class="chat-body">
+
+
     <div class="scope">
-      <span>Access scope: <strong id="scopeLabel">—</strong></span>
-      <button onclick="signOut()">Sign out</button>
+
+      <span>
+
+        Access scope:
+
+        <strong id="scopeLabel">
+          —
+        </strong>
+
+      </span>
+
+
+      <button onclick="signOut()">
+        Sign out
+      </button>
+
     </div>
 
-    <div id="chatPanel" class="panel active expanded-grid">
+
+
+    <div
+      id="chatPanel"
+      class="panel active expanded-grid"
+    >
+
       <div>
+
         <div id="conversation"></div>
+
       </div>
+
 
       <aside class="analysis-side">
+
         <div class="side-card">
-          <h4>About this scope</h4>
-          <p style="font-size:11px;color:var(--muted);margin:0">
-            What you can see here is fixed by your login -- it isn't a
-            setting you can change from this panel. If something looks
-            missing, that's your access scope working as intended, not
-            a bug.
+
+          <h4>
+            About this scope
+          </h4>
+
+          <p
+            style="
+              font-size:11px;
+              color:var(--muted);
+              margin:0;
+            "
+          >
+            Your accessible staffing data is determined
+            by your login permissions.
           </p>
+
         </div>
+
+
         <div class="side-card">
-          <h4>Last Report Preview</h4>
-          <div id="reportPreviewSide" class="report-preview">
-            <div class="report-line"><span>Status</span><b>No report generated yet</b></div>
+
+          <h4>
+            Last Report Preview
+          </h4>
+
+
+          <div
+            id="reportPreviewSide"
+            class="report-preview"
+          >
+
+            <div class="report-line">
+
+              <span>
+                Status
+              </span>
+
+              <b>
+                No report generated yet
+              </b>
+
+            </div>
+
           </div>
+
         </div>
+
       </aside>
+
     </div>
+
   </div>
+
+
+
+  <!-- =====================================================
+       COMPOSER
+       ===================================================== -->
 
   <div class="chat-compose">
-    <div class="context-row"><span class="context" id="scopeChip">Scoped to your login</span></div>
-    <label class="bu-toggle-row">
-      <input type="checkbox" id="buBreakdownToggle" onchange="toast(this.checked ? 'BU breakdown mode on' : 'BU breakdown mode off')" />
-      <span>Break down results by BU</span>
-    </label>
-    <div class="compose">
-      <button class="plus" onclick="toast('Attachments are not supported by the backend yet')">＋</button>
-      <input id="chatInput" placeholder="Ask about candidates, recruiters, clients, roll-offs…" onkeydown="if(event.key==='Enter') sendMessage()" />
-      <button class="send" id="sendBtn" onclick="sendMessage()">➤</button>
+
+
+    <div class="context-row">
+
+      <span
+        class="context"
+        id="scopeChip"
+      >
+        Scoped to your login
+      </span>
+
     </div>
-    <div class="disclaimer">Answers use accessible staffing records and preserve existing permissions and masking.</div>
+
+
+    <label class="bu-toggle-row">
+
+      <input
+        type="checkbox"
+        id="buBreakdownToggle"
+        onchange="
+          toast(
+            this.checked
+              ? 'BU breakdown mode on'
+              : 'BU breakdown mode off'
+          )
+        "
+      />
+
+      <span>
+        Break down results by BU
+      </span>
+
+    </label>
+
+
+    <div class="compose">
+
+
+      <!-- ATTACH -->
+
+      <button
+        class="plus"
+        title="Add attachment"
+        onclick="
+          toast(
+            'Attachments are not supported by the backend yet'
+          )
+        "
+      >
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+
+          <path
+            d="M21.44 11.05
+               12.25 20.24
+               a6 6 0 0 1-8.49-8.49
+               l9.19-9.19
+               a4 4 0 0 1 5.66 5.66
+               l-9.2 9.19
+               a2 2 0 0 1-2.83-2.83
+               l8.49-8.48"
+          ></path>
+
+        </svg>
+
+      </button>
+
+
+      <input
+        id="chatInput"
+        placeholder="Ask VDart AI about candidates, recruiters, clients, placements…"
+        onkeydown="
+          if(event.key==='Enter'){
+            sendMessage()
+          }
+        "
+      />
+
+
+      <!-- SEND -->
+
+      <button
+        class="send"
+        id="sendBtn"
+        title="Send message"
+        onclick="sendMessage()"
+      >
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+
+          <path
+            d="m22 2-7 20-4-9-9-4Z"
+          ></path>
+
+          <path
+            d="M22 2 11 13"
+          ></path>
+
+        </svg>
+
+      </button>
+
+    </div>
+
+
+    <div class="disclaimer">
+      Answers use accessible staffing records and preserve existing permissions and masking.
+    </div>
+
   </div>
+
 </section>
 
-<div id="reportModal" class="modal">
+
+
+<!-- =========================================================
+     REPORT BUILDER
+     ========================================================= -->
+
+<div
+  id="reportModal"
+  class="modal"
+>
+
   <div class="modal-card">
-    <div class="modal-head"><h3>✦ Build a Report</h3><button class="btn" onclick="closeReportBuilder()">Close</button></div>
+
+
+    <div class="modal-head">
+
+      <h3>
+        ✦ Build Staffing Report
+      </h3>
+
+      <button
+        class="btn"
+        onclick="closeReportBuilder()"
+      >
+        Close
+      </button>
+
+    </div>
+
+
     <div class="modal-body">
-      <p style="font-size:12px;color:var(--muted);margin-top:0">
-        This composes one natural-language question from the fields below,
-        sends it to VDart AI, and shows the real result -- there's no
-        separate report engine behind this, it's the same chat pipeline.
+
+      <p
+        style="
+          font-size:12px;
+          color:var(--muted);
+          margin-top:0;
+          line-height:1.55;
+        "
+      >
+        Configure the report below. VDart AI converts
+        the selections into a natural-language staffing
+        question and runs it through the same secure AI
+        pipeline.
       </p>
+
+
       <div class="form-grid">
-        <div><div class="form-label">Group by</div><select class="form-control" id="reportGroupBy"><option value="recruiter">Recruiter</option><option value="client">Client</option><option value="status">Status</option><option value="BU">BU</option></select></div>
-        <div><div class="form-label">Filter (optional)</div><input class="form-control" id="reportFilter" placeholder="e.g. Active only"/></div>
+
+        <div>
+
+          <div class="form-label">
+            Group by
+          </div>
+
+          <select
+            class="form-control"
+            id="reportGroupBy"
+          >
+
+            <option value="recruiter">
+              Recruiter
+            </option>
+
+            <option value="client">
+              Client
+            </option>
+
+            <option value="status">
+              Status
+            </option>
+
+            <option value="BU">
+              BU
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div>
+
+          <div class="form-label">
+            Filter
+          </div>
+
+          <input
+            class="form-control"
+            id="reportFilter"
+            placeholder="Example: Active only"
+          />
+
+        </div>
+
       </div>
-      <div class="preview" id="reportPreviewWrap">
-        <div class="preview-head">Preview</div>
-        <div class="preview-empty" id="reportPreviewEmpty">Click "Refresh Preview" to run this as a real question.</div>
-        <div class="table-wrap"><table id="reportPreviewTable" style="display:none"><thead id="reportPreviewHead"></thead><tbody id="reportPreviewBody"></tbody></table></div>
+
+
+      <div
+        class="preview"
+        id="reportPreviewWrap"
+      >
+
+        <div class="preview-head">
+          Report Preview
+        </div>
+
+
+        <div
+          class="preview-empty"
+          id="reportPreviewEmpty"
+        >
+          Click "Refresh Preview" to run this report.
+        </div>
+
+
+        <div class="table-wrap">
+
+          <table
+            id="reportPreviewTable"
+            style="display:none"
+          >
+
+            <thead id="reportPreviewHead"></thead>
+
+            <tbody id="reportPreviewBody"></tbody>
+
+          </table>
+
+        </div>
+
       </div>
+
     </div>
+
+
     <div class="modal-actions">
-      <button class="btn" id="refreshPreviewBtn" onclick="refreshReportPreview()">Refresh Preview</button>
-      <button class="btn primary" id="generateExcelBtn" onclick="downloadCurrentReport()" disabled>Generate Excel</button>
+
+      <button
+        class="btn"
+        id="refreshPreviewBtn"
+        onclick="refreshReportPreview()"
+      >
+        Refresh Preview
+      </button>
+
+
+      <button
+        class="btn primary"
+        id="generateExcelBtn"
+        onclick="downloadCurrentReport()"
+        disabled
+      >
+        Generate Excel
+      </button>
+
     </div>
+
   </div>
+
 </div>
 
-<div id="loginGate" class="login-gate">
+
+
+<!-- =========================================================
+     LOGIN
+     ========================================================= -->
+
+<div
+  id="loginGate"
+  class="login-gate"
+>
+
   <div class="login-card">
-    <h3>Sign in to VDart Staffing AI</h3>
-    <p>Enter the login email configured for your access scope. This is not yet verified authentication -- see project notes.</p>
-    <div class="login-error" id="loginError"></div>
-    <input id="loginInput" placeholder="you@vdartinc.com" onkeydown="if(event.key==='Enter') submitLogin()"/>
-    <button class="btn primary" style="width:100%" onclick="submitLogin()">Continue</button>
+
+    <div class="login-brand">
+      V
+    </div>
+
+
+    <h3>
+      VDart Staffing Intelligence
+    </h3>
+
+
+    <p>
+      Enter the login email configured for your
+      staffing access scope.
+    </p>
+
+
+    <div
+      class="login-error"
+      id="loginError"
+    ></div>
+
+
+    <input
+      id="loginInput"
+      placeholder="you@vdartinc.com"
+      onkeydown="
+        if(event.key==='Enter'){
+          submitLogin()
+        }
+      "
+    />
+
+
+    <button
+      class="btn primary"
+      style="width:100%"
+      onclick="submitLogin()"
+    >
+      Continue
+    </button>
+
   </div>
+
 </div>
 
-<div id="toast" class="toast"></div>
+
+
+<div
+  id="toast"
+  class="toast"
+></div>
+
+
 
 <script>
+
 /* =========================================================
-   AUTH -- talks to auth.py via the X-Login-Id header.
-   This header is UNVERIFIED right now (see auth.py's own
-   security note) -- fine for local/solo testing only.
+   AUTH
    ========================================================= */
-const LOGIN_STORAGE_KEY = 'vdart_chat_login_id';
-let currentLoginId = localStorage.getItem(LOGIN_STORAGE_KEY) || null;
+
+const LOGIN_STORAGE_KEY =
+  'vdart_chat_login_id';
+
+
+let currentLoginId =
+  localStorage.getItem(
+    LOGIN_STORAGE_KEY
+  ) || null;
+
+
 
 function requireLogin(){
+
   if(!currentLoginId){
-    document.getElementById('loginGate').classList.add('open');
-  } else {
-    applyLoginToUI(currentLoginId);
+
+    document
+      .getElementById('loginGate')
+      .classList
+      .add('open');
+
+  }else{
+
+    applyLoginToUI(
+      currentLoginId
+    );
+
   }
+
 }
+
+
+
 function applyLoginToUI(loginId){
-  document.getElementById('topbarLogin').textContent = loginId;
-  document.getElementById('topbarAvatar').textContent = loginId.slice(0,2).toUpperCase();
-  document.getElementById('scopeLabel').textContent = loginId;
-  initConversationForLogin(loginId);
+
+  document
+    .getElementById('topbarLogin')
+    .textContent =
+      loginId;
+
+
+  document
+    .getElementById('topbarAvatar')
+    .textContent =
+      loginId
+        .slice(0,2)
+        .toUpperCase();
+
+
+  document
+    .getElementById('scopeLabel')
+    .textContent =
+      loginId;
+
+
+  initConversationForLogin(
+    loginId
+  );
+
 }
+
+
+
 function submitLogin(){
-  const val = document.getElementById('loginInput').value.trim().toLowerCase();
-  if(!val){ document.getElementById('loginError').textContent = 'Enter a login email.'; return; }
-  currentLoginId = val;
-  localStorage.setItem(LOGIN_STORAGE_KEY, val);
-  document.getElementById('loginGate').classList.remove('open');
-  document.getElementById('loginError').textContent = '';
-  applyLoginToUI(val);
-}
-function emptyConversationHTML(){
-  return `
-    <div class="welcome" style="text-align:center;padding:18px 18px 16px;margin-bottom:14px;background:linear-gradient(145deg,#ffffff,#f4f8ff)">
-      <div style="font-size:12px;font-weight:800;color:#2563eb;letter-spacing:.02em;margin-bottom:6px">VDART STAFFING AI</div>
-      <h3 style="font-size:18px;margin-bottom:6px">What would you like to analyze?</h3>
-      <p style="max-width:620px;margin:0 auto">Use one of the common staffing questions below or ask your own. Results stay within your login permissions.</p>
-    </div>
-    <div class="quick-grid">
-      <button class="quick" onclick="quickAsk('How many candidates do we have in total?')"><strong>Candidate total</strong><span>Get the overall accessible candidate count</span></button>
-      <button class="quick" onclick="quickAsk('How many candidates does each recruiter have?')"><strong>Recruiter breakdown</strong><span>Compare candidate volume by recruiter</span></button>
-      <button class="quick" onclick="quickAsk('List clients with more than 10 candidates')"><strong>Client breakdown</strong><span>Find high-volume clients and thresholds</span></button>
-      <button class="quick" onclick="quickAsk('How many roll offs do we have?')"><strong>Roll-offs</strong><span>Review current roll-off volume</span></button>
-      <button class="quick" onclick="quickAsk('How many candidates are currently Active?')"><strong>Active candidates</strong><span>Check the current active population</span></button>
-      <button class="quick" onclick="openReportBuilder()"><strong>Build a report</strong><span>Create a grouped report and export to Excel</span></button>
-    </div>`;
-}
 
-/* ============================================================
-   SAVED CHAT HISTORY -- persists conversations to localStorage,
-   scoped per login (same storage pattern the login itself already
-   uses), so refreshing the page or coming back later doesn't lose
-   anything, and past conversations can be reopened -- closest
-   equivalent here to Claude's saved-chat history, without needing
-   a new backend table (this app's "login" isn't real authentication
-   either, so backend-side per-user storage wouldn't add real
-   security, just complexity, for no real benefit yet).
-   ============================================================ */
-const HISTORY_KEY_PREFIX = 'vdart_chat_history_';
-const CURRENT_CONV_KEY_PREFIX = 'vdart_chat_current_';
-let currentConversationId = null;
-let currentMessages = []; // [{type:'user',text} | {type:'bot',question,data}], mirrors what's rendered
+  const val =
+    document
+      .getElementById('loginInput')
+      .value
+      .trim()
+      .toLowerCase();
 
-function _historyKey(loginId){ return HISTORY_KEY_PREFIX + loginId; }
-function _currentKey(loginId){ return CURRENT_CONV_KEY_PREFIX + loginId; }
 
-function loadHistory(loginId){
-  try{
-    const raw = localStorage.getItem(_historyKey(loginId));
-    return raw ? JSON.parse(raw) : [];
-  }catch(e){ return []; } // corrupt/blocked storage -- fail to an empty list, never break the chat itself
-}
-function saveHistory(loginId, list){
-  try{ localStorage.setItem(_historyKey(loginId), JSON.stringify(list)); }
-  catch(e){ /* storage full/blocked -- saving is a convenience, never worth breaking the live chat over */ }
-}
-function makeTitleFromQuestion(q){
-  const t = (q || '').trim().replace(/\s+/g, ' ');
-  return t.length > 48 ? t.slice(0, 48) + '…' : (t || 'New chat');
-}
+  if(!val){
 
-function startNewConversation(){
-  currentConversationId = 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-  currentMessages = [];
-  if(currentLoginId) localStorage.setItem(_currentKey(currentLoginId), currentConversationId);
-}
+    document
+      .getElementById('loginError')
+      .textContent =
+        'Enter a login email.';
 
-function persistCurrentConversation(){
-  if(!currentLoginId || currentMessages.length === 0) return;
-  const list = loadHistory(currentLoginId);
-  const idx = list.findIndex(c => c.id === currentConversationId);
-  const firstUserMsg = currentMessages.find(m => m.type === 'user');
-  // Preserve an existing title (auto-generated OR manually renamed) once
-  // this conversation already has an entry -- only a brand-new
-  // conversation's first save should compute the auto-title, otherwise
-  // every subsequent message would silently overwrite a manual rename.
-  const existingTitle = idx >= 0 ? list[idx].title : null;
-  const entry = {
-    id: currentConversationId,
-    title: existingTitle || (firstUserMsg ? makeTitleFromQuestion(firstUserMsg.text) : 'New chat'),
-    updatedAt: Date.now(),
-    messages: currentMessages,
-  };
-  if(idx >= 0) list[idx] = entry; else list.unshift(entry);
-  saveHistory(currentLoginId, list.slice(0, 50)); // cap so localStorage doesn't grow unbounded
-  localStorage.setItem(_currentKey(currentLoginId), currentConversationId);
-}
-
-function renderConversationFromMessages(messages){
-  const conv = document.getElementById('conversation');
-  conv.innerHTML = '';
-  for(const m of messages){
-    if(m.type === 'user'){
-      conv.insertAdjacentHTML('beforeend', `<div class="message user">${escapeHtml(m.text)}${m.time ? `<div class="msg-time">${formatTime(m.time)}</div>` : ''}</div>`);
-    } else if(m.type === 'bot'){
-      // download_id points at a server-side temp export file that won't
-      // still exist after a reload/restart -- never replay a download
-      // button that's guaranteed to 404 if clicked.
-      renderAnswer(m.question, {...m.data, download_id: null, pdf_download_id: null}, m.time);
-    }
-  }
-  const body = document.querySelector('.chat-body');
-  if(body) body.scrollTop = body.scrollHeight;
-}
-
-function initConversationForLogin(loginId){
-  const savedCurrentId = localStorage.getItem(_currentKey(loginId));
-  const list = loadHistory(loginId);
-  const entry = savedCurrentId ? list.find(c => c.id === savedCurrentId) : null;
-  conversationHistory.length = 0;
-  if(entry){
-    currentConversationId = entry.id;
-    currentMessages = entry.messages.slice();
-    for(const m of currentMessages){
-      if(m.type === 'bot') conversationHistory.push({question: m.question, answer: (m.data && m.data.answer) || ''});
-    }
-    renderConversationFromMessages(currentMessages);
-  } else {
-    startNewConversation();
-    document.getElementById('conversation').innerHTML = emptyConversationHTML();
-  }
-}
-
-function loadConversation(id){
-  const list = loadHistory(currentLoginId);
-  const entry = list.find(c => c.id === id);
-  if(!entry) return;
-  currentConversationId = entry.id;
-  currentMessages = entry.messages.slice();
-  conversationHistory.length = 0;
-  for(const m of currentMessages){
-    if(m.type === 'bot') conversationHistory.push({question: m.question, answer: (m.data && m.data.answer) || ''});
-  }
-  renderConversationFromMessages(currentMessages);
-  localStorage.setItem(_currentKey(currentLoginId), currentConversationId);
-  closeHistoryPanel();
-  openChatTab();
-}
-
-function deleteConversation(id, evt){
-  if(evt) evt.stopPropagation();
-  const list = loadHistory(currentLoginId).filter(c => c.id !== id);
-  saveHistory(currentLoginId, list);
-  if(id === currentConversationId){
-    startNewConversation();
-    document.getElementById('conversation').innerHTML = emptyConversationHTML();
-    conversationHistory.length = 0;
-  }
-  renderHistoryList();
-}
-
-function renameConversation(id, evt){
-  if(evt) evt.stopPropagation();
-  const list = loadHistory(currentLoginId);
-  const entry = list.find(c => c.id === id);
-  if(!entry) return;
-  const item = document.querySelector(`.history-item[data-id="${id}"] .history-item-main`);
-  if(!item) return;
-  const titleEl = item.querySelector('b');
-  const input = document.createElement('input');
-  input.className = 'history-rename-input';
-  input.value = entry.title;
-  titleEl.replaceWith(input);
-  input.focus();
-  input.select();
-  const commit = () => {
-    const newTitle = input.value.trim();
-    if(newTitle) entry.title = newTitle;
-    saveHistory(currentLoginId, list);
-    renderHistoryList();
-  };
-  input.addEventListener('keydown', e => {
-    if(e.key === 'Enter'){ e.preventDefault(); commit(); }
-    if(e.key === 'Escape'){ e.preventDefault(); renderHistoryList(); }
-  });
-  input.addEventListener('blur', commit);
-  input.addEventListener('click', e => e.stopPropagation());
-}
-
-function relativeTime(ms){
-  const diffMin = Math.round((Date.now() - ms) / 60000);
-  if(diffMin < 1) return 'Just now';
-  if(diffMin < 60) return `${diffMin} min ago`;
-  const diffHr = Math.round(diffMin / 60);
-  if(diffHr < 24) return `${diffHr} hr ago`;
-  const diffDay = Math.round(diffHr / 24);
-  if(diffDay === 1) return 'Yesterday';
-  if(diffDay < 7) return `${diffDay} days ago`;
-  return new Date(ms).toLocaleDateString([], {month:'short', day:'numeric'});
-}
-
-function renderHistoryList(){
-  const list = loadHistory(currentLoginId);
-  const panel = document.getElementById('historyList');
-  if(list.length === 0){
-    panel.innerHTML = `<div class="history-empty">No saved chats yet -- ask something to start one.</div>`;
     return;
+
   }
-  panel.innerHTML = list.map(c => `
-    <div class="history-item ${c.id === currentConversationId ? 'current' : ''}" data-id="${c.id}" onclick="loadConversation('${c.id}')">
-      <div class="history-item-main">
-        <b>${escapeHtml(c.title)}</b>
-        <span title="${new Date(c.updatedAt).toLocaleString()}">${relativeTime(c.updatedAt)}</span>
-      </div>
-      <div class="history-item-actions">
-        <button class="history-rename" title="Rename" onclick="renameConversation('${c.id}', event)">✎</button>
-        <button class="history-delete" title="Delete" onclick="deleteConversation('${c.id}', event)">×</button>
-      </div>
-    </div>
-  `).join('');
+
+
+  currentLoginId = val;
+
+
+  localStorage.setItem(
+    LOGIN_STORAGE_KEY,
+    val
+  );
+
+
+  document
+    .getElementById('loginGate')
+    .classList
+    .remove('open');
+
+
+  document
+    .getElementById('loginError')
+    .textContent = '';
+
+
+  applyLoginToUI(val);
+
 }
 
-function toggleHistoryPanel(){
-  const panel = document.getElementById('historyPanel');
-  const opening = !panel.classList.contains('open');
-  if(opening) renderHistoryList();
-  panel.classList.toggle('open');
-}
-function closeHistoryPanel(){
-  document.getElementById('historyPanel').classList.remove('open');
-}
 
-function signOut(){
-  currentLoginId = null;
-  localStorage.removeItem(LOGIN_STORAGE_KEY);
-  document.getElementById('loginInput').value = '';
-  currentConversationId = null;
-  currentMessages = [];
-  closeHistoryPanel();
-  document.getElementById('conversation').innerHTML = emptyConversationHTML();
-  conversationHistory.length = 0;
-  requireLogin();
-}
 
 /* =========================================================
-   REAL API CALL -- replaces the old fake renderAnswer()
-   keyword-matching entirely.
+   EMPTY CHAT
    ========================================================= */
-const conversationHistory = []; // [{question, answer}, ...]
-const MAX_HISTORY_TURNS = 4;
 
-// Moved below conversationHistory's declaration on purpose: requireLogin()
-// -> applyLoginToUI() -> initConversationForLogin() reads/resets
-// conversationHistory for an already-logged-in returning user, so this
-// call must run AFTER that const exists, not before (a `const` is in its
-// temporal dead zone until its own declaration line executes -- calling
-// this any earlier throws a ReferenceError for anyone already logged in).
-requireLogin();
+function emptyConversationHTML(){
 
-async function askBackend(question){
-  const res = await fetch('/api/ask', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Login-Id': currentLoginId,
-    },
-    body: JSON.stringify({
-      question,
-      history: conversationHistory.slice(-MAX_HISTORY_TURNS),
-    }),
-  });
-  if(res.status === 401){
-    // login rejected server-side (unconfigured/missing) -- force re-login
-    currentLoginId = null;
-    localStorage.removeItem(LOGIN_STORAGE_KEY);
-    requireLogin();
-    throw new Error('Your login was not recognized by the server. Please sign in again.');
+  return `
+
+    <div class="welcome ai-welcome">
+
+      <div class="ai-intro-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+
+          <path
+            d="M12 3
+               l1.8 4.7
+               L18.5 9.5
+               l-4.7 1.8
+               L12 16
+               l-1.8-4.7
+               -4.7-1.8
+               4.7-1.8
+               L12 3z"
+          ></path>
+
+          <path
+            d="M19 15
+               l.9 2.1
+               L22 18
+               l-2.1.9
+               L19 21
+               l-.9-2.1
+               L16 18
+               l2.1-.9
+               L19 15z"
+          ></path>
+
+        </svg>
+
+      </div>
+
+
+      <div class="ai-eyebrow">
+        VDart Staffing Intelligence
+      </div>
+
+
+      <h3>
+        What would you like to understand today?
+      </h3>
+
+
+      <p>
+        Explore candidates, recruiters, clients,
+        submissions, placements and roll-offs.
+        Results stay within your assigned staffing
+        access permissions.
+      </p>
+
+    </div>
+
+
+
+    <div class="quick-grid">
+
+
+      <button
+        class="quick"
+        onclick="quickAsk(
+          'How many candidates do we have in total?'
+        )"
+      >
+
+        <div class="quick-icon">
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+
+            <path
+              d="M16 21v-2
+                 a4 4 0 0 0-4-4
+                 H6
+                 a4 4 0 0 0-4 4v2"
+            ></path>
+
+            <circle
+              cx="9"
+              cy="7"
+              r="4"
+            ></circle>
+
+            <path
+              d="M22 21v-2
+                 a4 4 0 0 0-3-3.87"
+            ></path>
+
+            <path
+              d="M16 3.13
+                 a4 4 0 0 1 0 7.75"
+            ></path>
+
+          </svg>
+
+        </div>
+
+
+        <div class="quick-content">
+
+          <strong>
+            Candidate overview
+          </strong>
+
+          <span>
+            Review your total accessible candidate population.
+          </span>
+
+        </div>
+
+      </button>
+
+
+
+      <button
+        class="quick"
+        onclick="quickAsk(
+          'How many candidates does each recruiter have?'
+        )"
+      >
+
+        <div class="quick-icon">
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+
+            <circle
+              cx="12"
+              cy="7"
+              r="4"
+            ></circle>
+
+            <path
+              d="M5.5 21
+                 a6.5 6.5 0 0 1 13 0"
+            ></path>
+
+            <path d="M19 8h3"></path>
+
+            <path d="M20.5 6.5v3"></path>
+
+          </svg>
+
+        </div>
+
+
+        <div class="quick-content">
+
+          <strong>
+            Recruiter performance
+          </strong>
+
+          <span>
+            Compare candidate ownership and workload by recruiter.
+          </span>
+
+        </div>
+
+      </button>
+
+
+
+      <button
+        class="quick"
+        onclick="quickAsk(
+          'List clients with more than 10 candidates'
+        )"
+      >
+
+        <div class="quick-icon">
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+
+            <rect
+              x="3"
+              y="4"
+              width="18"
+              height="17"
+              rx="2"
+            ></rect>
+
+            <path d="M8 21V8h8v13"></path>
+
+            <path d="M7 12h1"></path>
+
+            <path d="M16 12h1"></path>
+
+            <path d="M7 16h1"></path>
+
+            <path d="M16 16h1"></path>
+
+          </svg>
+
+        </div>
+
+
+        <div class="quick-content">
+
+          <strong>
+            Client intelligence
+          </strong>
+
+          <span>
+            Identify high-volume clients and candidate distribution.
+          </span>
+
+        </div>
+
+      </button>
+
+
+
+      <button
+        class="quick"
+        onclick="quickAsk(
+          'How many roll offs do we have?'
+        )"
+      >
+
+        <div class="quick-icon">
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+
+            <path
+              d="M3 12
+                 a9 9 0 1 0
+                 3-6.7
+                 L3 8"
+            ></path>
+
+            <path d="M3 3v5h5"></path>
+
+            <path d="M12 7v5l3 2"></path>
+
+          </svg>
+
+        </div>
+
+
+        <div class="quick-content">
+
+          <strong>
+            Roll-off analysis
+          </strong>
+
+          <span>
+            Review upcoming and current roll-off activity.
+          </span>
+
+        </div>
+
+      </button>
+
+
+
+      <button
+        class="quick"
+        onclick="quickAsk(
+          'How many candidates are currently Active?'
+        )"
+      >
+
+        <div class="quick-icon">
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+
+            <path
+              d="M20 6
+                 9 17
+                 l-5-5"
+            ></path>
+
+          </svg>
+
+        </div>
+
+
+        <div class="quick-content">
+
+          <strong>
+            Active workforce
+          </strong>
+
+          <span>
+            Check the current active candidate population.
+          </span>
+
+        </div>
+
+      </button>
+
+
+
+      <button
+        class="quick report-quick"
+        onclick="openReportBuilder()"
+      >
+
+        <div class="quick-icon">
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+
+            <path d="M4 19V9"></path>
+
+            <path d="M10 19V5"></path>
+
+            <path d="M16 19v-7"></path>
+
+            <path d="M22 19H2"></path>
+
+          </svg>
+
+        </div>
+
+
+        <div class="quick-content">
+
+          <strong>
+            Build staffing report
+          </strong>
+
+          <span>
+            Generate grouped analysis and export results to Excel.
+          </span>
+
+        </div>
+
+      </button>
+
+    </div>
+
+  `;
+
+}
+
+
+
+/* =========================================================
+   CHAT HISTORY
+   ========================================================= */
+
+const HISTORY_KEY_PREFIX =
+  'vdart_chat_history_';
+
+
+const CURRENT_CONV_KEY_PREFIX =
+  'vdart_chat_current_';
+
+
+let currentConversationId = null;
+
+
+let currentMessages = [];
+
+
+
+function _historyKey(loginId){
+
+  return (
+    HISTORY_KEY_PREFIX +
+    loginId
+  );
+
+}
+
+
+
+function _currentKey(loginId){
+
+  return (
+    CURRENT_CONV_KEY_PREFIX +
+    loginId
+  );
+
+}
+
+
+
+function loadHistory(loginId){
+
+  try{
+
+    const raw =
+      localStorage.getItem(
+        _historyKey(loginId)
+      );
+
+
+    return raw
+      ? JSON.parse(raw)
+      : [];
+
+  }catch(e){
+
+    return [];
+
   }
-  return res.json();
+
 }
 
-function toggleChat(){
-  const chat = document.getElementById('chat');
-  chat.classList.toggle('open');
-  // The floating launcher previously stayed visible (and on top, z-index
-  // above the chat panel) the whole time the chat was open, overlapping
-  // the send button and controls -- especially bad when maximized. The
-  // real logo now lives in the chat header itself (top-left, next to
-  // "VDart Staffing AI"), so the launcher has nothing left to do while
-  // the chat is open and should just get out of the way.
-  document.getElementById('vdartAiLauncher').style.display = chat.classList.contains('open') ? 'none' : '';
-}
-function toggleExpand(){document.getElementById('chat').classList.toggle('expanded')}
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
-function openChatTab(){
-  // Only one panel exists now (Insights/Saved tabs removed -- they were
-  // static placeholder content with no real backend behind them), so
-  // this just makes sure the floating widget itself is expanded open.
-  document.getElementById('chat').classList.add('open');
-  document.getElementById('vdartAiLauncher').style.display = 'none';
-}
-function newChat(){
-  startNewConversation();
-  document.getElementById('conversation').innerHTML = emptyConversationHTML();
-  conversationHistory.length = 0;
-}
-function quickAsk(q){document.getElementById('chatInput').value=q;sendMessage()}
-function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-function formatTime(ms){
-  if(!ms) return '';
-  return new Date(ms).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
-}
-function copyAnswerText(btn){
-  const text = btn.getAttribute('data-answer') || '';
-  navigator.clipboard.writeText(text).then(()=>{
-    const original = btn.textContent;
-    btn.textContent = 'Copied ✓';
-    btn.disabled = true;
-    setTimeout(()=>{ btn.textContent = original; btn.disabled = false; }, 1300);
-  }).catch(()=>{ toast('Could not copy to clipboard'); });
-}
 
-async function sendMessage(){
-  if(!currentLoginId){ requireLogin(); return; }
-  const input=document.getElementById('chatInput'); let q=input.value.trim(); if(!q)return;
 
-  const buMode = document.getElementById('buBreakdownToggle').checked;
-  if(buMode && !/\bbu\b|business unit/i.test(q)){
-    q = q.replace(/[?.!]+$/, '') + ', broken down by BU';
+function saveHistory(loginId,list){
+
+  try{
+
+    localStorage.setItem(
+      _historyKey(loginId),
+      JSON.stringify(list)
+    );
+
+  }catch(e){
+
   }
+
+}
+
+
+
+function makeTitleFromQuestion(q){
+
+  const t =
+    (q || '')
+      .trim()
+      .replace(
+        /\s+/g,
+        ' '
+      );
+
+
+  return (
+    t.length > 48
+      ? t.slice(0,48) + '…'
+      : (
+          t ||
+          'New chat'
+        )
+  );
+
+}
+
+
+
+function startNewConversation(){
+
+  currentConversationId =
+    'c_' +
+    Date.now() +
+    '_' +
+    Math
+      .random()
+      .toString(36)
+      .slice(2,8);
+
+
+  currentMessages = [];
+
+
+  if(currentLoginId){
+
+    localStorage.setItem(
+      _currentKey(
+        currentLoginId
+      ),
+      currentConversationId
+    );
+
+  }
+
+}
+
+
+
+function persistCurrentConversation(){
+
+  if(
+    !currentLoginId ||
+    currentMessages.length === 0
+  ){
+    return;
+  }
+
+
+  const list =
+    loadHistory(
+      currentLoginId
+    );
+
+
+  const idx =
+    list.findIndex(
+      c =>
+        c.id ===
+        currentConversationId
+    );
+
+
+  const firstUserMsg =
+    currentMessages.find(
+      m =>
+        m.type === 'user'
+    );
+
+
+  const existingTitle =
+    idx >= 0
+      ? list[idx].title
+      : null;
+
+
+  const entry = {
+
+    id:
+      currentConversationId,
+
+    title:
+      existingTitle ||
+      (
+        firstUserMsg
+          ? makeTitleFromQuestion(
+              firstUserMsg.text
+            )
+          : 'New chat'
+      ),
+
+    updatedAt:
+      Date.now(),
+
+    messages:
+      currentMessages
+
+  };
+
+
+  if(idx >= 0){
+
+    list[idx] =
+      entry;
+
+  }else{
+
+    list.unshift(
+      entry
+    );
+
+  }
+
+
+  saveHistory(
+    currentLoginId,
+    list.slice(0,50)
+  );
+
+
+  localStorage.setItem(
+    _currentKey(
+      currentLoginId
+    ),
+    currentConversationId
+  );
+
+}
+
+
+
+/* =========================================================
+   RENDER SAVED CHAT
+   ========================================================= */
+
+function renderConversationFromMessages(messages){
+
+  const conv =
+    document.getElementById(
+      'conversation'
+    );
+
+
+  conv.innerHTML = '';
+
+
+  for(const m of messages){
+
+    if(m.type === 'user'){
+
+      conv.insertAdjacentHTML(
+        'beforeend',
+        `
+          <div class="message user">
+            ${escapeHtml(m.text)}
+
+            ${
+              m.time
+                ? `
+                  <div class="msg-time">
+                    ${formatTime(m.time)}
+                  </div>
+                `
+                : ''
+            }
+          </div>
+        `
+      );
+
+    }else if(m.type === 'bot'){
+
+      renderAnswer(
+        m.question,
+        {
+          ...m.data,
+          download_id:null,
+          pdf_download_id:null
+        },
+        m.time
+      );
+
+    }
+
+  }
+
+
+  const panel =
+    document.getElementById(
+      'chatPanel'
+    );
+
+
+  if(panel){
+
+    panel.scrollTop =
+      panel.scrollHeight;
+
+  }
+
+}
+
+
+
+/* =========================================================
+   INIT CONVERSATION
+   ========================================================= */
+
+function initConversationForLogin(loginId){
+
+  const savedCurrentId =
+    localStorage.getItem(
+      _currentKey(loginId)
+    );
+
+
+  const list =
+    loadHistory(loginId);
+
+
+  const entry =
+    savedCurrentId
+      ? list.find(
+          c =>
+            c.id ===
+            savedCurrentId
+        )
+      : null;
+
+
+  conversationHistory.length =
+    0;
+
+
+  if(entry){
+
+    currentConversationId =
+      entry.id;
+
+
+    currentMessages =
+      entry.messages.slice();
+
+
+    for(
+      const m
+      of currentMessages
+    ){
+
+      if(m.type === 'bot'){
+
+        conversationHistory.push({
+
+          question:
+            m.question,
+
+          answer:
+            (
+              m.data &&
+              m.data.answer
+            ) || ''
+
+        });
+
+      }
+
+    }
+
+
+    renderConversationFromMessages(
+      currentMessages
+    );
+
+  }else{
+
+    startNewConversation();
+
+
+    document
+      .getElementById('conversation')
+      .innerHTML =
+        emptyConversationHTML();
+
+  }
+
+}
+
+
+
+/* =========================================================
+   LOAD CHAT
+   ========================================================= */
+
+function loadConversation(id){
+
+  const list =
+    loadHistory(
+      currentLoginId
+    );
+
+
+  const entry =
+    list.find(
+      c =>
+        c.id === id
+    );
+
+
+  if(!entry){
+    return;
+  }
+
+
+  currentConversationId =
+    entry.id;
+
+
+  currentMessages =
+    entry.messages.slice();
+
+
+  conversationHistory.length =
+    0;
+
+
+  for(
+    const m
+    of currentMessages
+  ){
+
+    if(m.type === 'bot'){
+
+      conversationHistory.push({
+
+        question:
+          m.question,
+
+        answer:
+          (
+            m.data &&
+            m.data.answer
+          ) || ''
+
+      });
+
+    }
+
+  }
+
+
+  renderConversationFromMessages(
+    currentMessages
+  );
+
+
+  localStorage.setItem(
+    _currentKey(
+      currentLoginId
+    ),
+    currentConversationId
+  );
+
+
+  closeHistoryPanel();
+
 
   openChatTab();
-  if(!currentConversationId) startNewConversation(); // safety net -- should already exist from login/newChat
-  const conv=document.getElementById('conversation');
-  const userTime = Date.now();
-  conv.insertAdjacentHTML('beforeend',`<div class="message user">${escapeHtml(q)}<div class="msg-time">${formatTime(userTime)}</div></div>`);
-  currentMessages.push({type: 'user', text: q, time: userTime});
-  input.value='';
-  document.getElementById('sendBtn').disabled = true;
-  conv.insertAdjacentHTML('beforeend',`<div id="thinking" class="message bot thinking"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`);
-  const body=document.querySelector('.chat-body');body.scrollTop=body.scrollHeight;
 
-  try{
-    const data = await askBackend(q);
-    document.getElementById('thinking')?.remove();
-    const botTime = Date.now();
-    renderAnswer(q, data, botTime);
-    if(!data.blocked && !data.error){
-      conversationHistory.push({question: q, answer: data.answer || ''});
-    }
-    currentMessages.push({type: 'bot', question: q, data, time: botTime});
-    persistCurrentConversation();
-  }catch(err){
-    document.getElementById('thinking')?.remove();
-    conv.insertAdjacentHTML('beforeend', `<div class="message bot error">Could not reach the server: ${escapeHtml(err.message)}</div>`);
-  }finally{
-    document.getElementById('sendBtn').disabled = false;
-    body.scrollTop=body.scrollHeight;
-  }
 }
 
-function renderAnswer(question, data, time){
-  const conv = document.getElementById('conversation');
-  const answerHtml = (typeof marked !== 'undefined')
-    ? marked.parse(data.answer || 'No answer returned.')
-    : escapeHtml(data.answer || 'No answer returned.');
 
-  const stateClass = data.blocked ? 'blocked' : (data.error ? 'error' : '');
-  let chips = '';
-  if(data.blocked) chips += `<span class="chip blocked">Blocked</span>`;
-  if(data.error) chips += `<span class="chip blocked">Error</span>`;
-  if(data.is_general_knowledge) chips += `<span class="chip">General knowledge</span>`;
-  if(data.is_insight) chips += `<span class="chip">Analysis</span>`;
-  if(data.row_count) chips += `<span class="chip">${data.row_count} row${data.row_count===1?'':'s'}</span>`;
 
-  let followupChips = '';
-  if(Array.isArray(data.suggested_followups)){
-    for(const followup of data.suggested_followups){
-      const safe = escapeHtml(followup).replace(/'/g, "&#39;");
-      followupChips += `<button class="mini" onclick="quickAsk('${safe}')">${escapeHtml(followup)}</button>`;
-    }
+/* =========================================================
+   DELETE CHAT
+   ========================================================= */
+
+function deleteConversation(
+  id,
+  evt
+){
+
+  if(evt){
+
+    evt.stopPropagation();
+
   }
 
-  let downloadAction = '';
-  if(data.download_id){
-    downloadAction += `<button class="mini primary" onclick="downloadAnswerFile('${data.download_id}','${(data.download_filename||'results.xlsx').replace(/'/g,"")}')">Excel ↓</button>`;
+
+  const list =
+    loadHistory(
+      currentLoginId
+    ).filter(
+      c =>
+        c.id !== id
+    );
+
+
+  saveHistory(
+    currentLoginId,
+    list
+  );
+
+
+  if(
+    id ===
+    currentConversationId
+  ){
+
+    startNewConversation();
+
+
+    document
+      .getElementById('conversation')
+      .innerHTML =
+        emptyConversationHTML();
+
+
+    conversationHistory.length =
+      0;
+
   }
-  if(data.pdf_download_id){
-    downloadAction += `<button class="mini" onclick="downloadAnswerFile('${data.pdf_download_id}','${(data.pdf_download_filename||'results.pdf').replace(/'/g,"")}')">PDF ↓</button>`;
+
+
+  renderHistoryList();
+
+}
+
+
+
+/* =========================================================
+   RENAME CHAT
+   ========================================================= */
+
+function renameConversation(
+  id,
+  evt
+){
+
+  if(evt){
+
+    evt.stopPropagation();
+
   }
 
-  // Retry -- only meaningful for a failed/blocked answer, so the person
-  // doesn't have to retype the exact same question by hand.
-  let retryAction = '';
-  if(data.blocked || data.error){
-    retryAction = `<button class="mini" data-q="${escapeHtml(question)}" onclick="quickAsk(this.getAttribute('data-q'))">Retry</button>`;
+
+  const list =
+    loadHistory(
+      currentLoginId
+    );
+
+
+  const entry =
+    list.find(
+      c =>
+        c.id === id
+    );
+
+
+  if(!entry){
+    return;
   }
-  // Copy -- only for a real, successful answer; nothing useful to copy
-  // out of an error/blocked message.
-  let copyAction = '';
-  if(!data.blocked && !data.error && data.answer){
-    copyAction = `<button class="mini" data-answer="${escapeHtml(data.answer)}" onclick="copyAnswerText(this)">Copy</button>`;
+
+
+  const item =
+    document.querySelector(
+      `.history-item[data-id="${id}"] .history-item-main`
+    );
+
+
+  if(!item){
+    return;
   }
-  const timeHtml = time ? `<div class="msg-time">${formatTime(time)}</div>` : '';
 
-  conv.insertAdjacentHTML('beforeend', `<div class="message bot ${stateClass}">
-    ${answerHtml}
-    ${chips ? `<div class="badge-row">${chips}</div>` : ''}
-    ${(retryAction || copyAction || followupChips) ? `<div class="actions">${retryAction}${copyAction}${followupChips}</div>` : ''}
-    ${downloadAction ? `<div class="actions">${downloadAction}</div>` : ''}
-    ${timeHtml}
-  </div>`);
-}
 
-function downloadAnswerFile(downloadId, filename){
-  window.location.href = `/api/download/${downloadId}?filename=${encodeURIComponent(filename)}`;
-}
+  const titleEl =
+    item.querySelector('b');
 
-/* selection bar -- static demo table only, but the "ask about
-   selection" action DOES send a real question built from the
-   selected (demo) row names */
-function toggleAll(el){document.querySelectorAll('.rowcheck').forEach(c=>c.checked=el.checked);selectionChanged()}
-function clearSelection(){document.querySelectorAll('.rowcheck').forEach(c=>c.checked=false);document.getElementById('selectAll').checked=false;selectionChanged()}
-function selectionChanged(){
-  const n=[...document.querySelectorAll('.rowcheck')].filter(c=>c.checked).length;
-  document.getElementById('selectionBar').classList.toggle('show',n>0);
-  document.getElementById('selectionText').textContent=`${n} candidate${n===1?'':'s'} selected`;
-}
-function askSelection(){
-  const rows = [...document.querySelectorAll('.rowcheck')]
-    .filter(c=>c.checked)
-    .map(c => c.closest('tr').children[1].textContent.trim());
-  if(rows.length === 0) return;
-  document.getElementById('chat').classList.add('open');
-  quickAsk(`Give me details on these candidates: ${rows.join(', ')}`);
-}
 
-/* Report builder -- composes a real question, calls the real
-   backend, and renders the REAL preview_columns/preview_rows
-   this response now includes (see server.py's AnswerResponse). */
-let lastReportDownload = null;
+  const input =
+    document.createElement(
+      'input'
+    );
 
-function composeReportQuestion(){
-  const groupBy = document.getElementById('reportGroupBy').value;
-  const filter = document.getElementById('reportFilter').value.trim();
-  let q = `How many candidates does each ${groupBy} have`;
-  if(filter) q += `, filtered to ${filter}`;
-  return q + '?';
-}
 
-async function refreshReportPreview(){
-  if(!currentLoginId){ requireLogin(); return; }
-  const btn = document.getElementById('refreshPreviewBtn');
-  const emptyEl = document.getElementById('reportPreviewEmpty');
-  const tableEl = document.getElementById('reportPreviewTable');
-  const headEl = document.getElementById('reportPreviewHead');
-  const bodyEl = document.getElementById('reportPreviewBody');
-  const genBtn = document.getElementById('generateExcelBtn');
+  input.className =
+    'history-rename-input';
 
-  btn.disabled = true;
-  emptyEl.style.display = 'block';
-  emptyEl.textContent = 'Running…';
-  tableEl.style.display = 'none';
-  genBtn.disabled = true;
-  lastReportDownload = null;
 
-  try{
-    const question = composeReportQuestion();
-    const data = await askBackend(question);
+  input.value =
+    entry.title;
 
-    if(data.blocked || data.error){
-      emptyEl.textContent = data.answer || data.error || 'This request was blocked.';
+
+  titleEl.replaceWith(
+    input
+  );
+
+
+  input.focus();
+  input.select();
+
+
+  let committed = false;
+
+
+  const commit = () => {
+
+    if(committed){
       return;
     }
 
-    if(data.preview_columns && data.preview_rows && data.preview_rows.length){
-      headEl.innerHTML = '<tr>' + data.preview_columns.map(c => `<th>${escapeHtml(c)}</th>`).join('') + '</tr>';
-      bodyEl.innerHTML = data.preview_rows.map(row =>
-        '<tr>' + row.map(v => `<td>${escapeHtml(String(v ?? ''))}</td>`).join('') + '</tr>'
-      ).join('');
-      tableEl.style.display = '';
-      emptyEl.style.display = 'none';
-    } else {
-      emptyEl.textContent = 'This question returned a single value, not a table -- nothing to preview.';
+    committed = true;
+
+
+    const newTitle =
+      input.value.trim();
+
+
+    if(newTitle){
+
+      entry.title =
+        newTitle;
+
     }
 
-    document.getElementById('reportPreviewSide').innerHTML = `
-      <div class="report-line"><span>Question</span><b>${escapeHtml(question)}</b></div>
-      <div class="report-line"><span>Rows</span><b>${data.row_count || 0}</b></div>
+
+    saveHistory(
+      currentLoginId,
+      list
+    );
+
+
+    renderHistoryList();
+
+  };
+
+
+  input.addEventListener(
+    'keydown',
+    e => {
+
+      if(e.key === 'Enter'){
+
+        e.preventDefault();
+
+        commit();
+
+      }
+
+
+      if(e.key === 'Escape'){
+
+        e.preventDefault();
+
+        committed = true;
+
+        renderHistoryList();
+
+      }
+
+    }
+  );
+
+
+  input.addEventListener(
+    'blur',
+    commit
+  );
+
+
+  input.addEventListener(
+    'click',
+    e =>
+      e.stopPropagation()
+  );
+
+}
+
+
+
+/* =========================================================
+   RELATIVE TIME
+   ========================================================= */
+
+function relativeTime(ms){
+
+  const diffMin =
+    Math.round(
+      (
+        Date.now() -
+        ms
+      ) /
+      60000
+    );
+
+
+  if(diffMin < 1){
+    return 'Just now';
+  }
+
+
+  if(diffMin < 60){
+    return `${diffMin} min ago`;
+  }
+
+
+  const diffHr =
+    Math.round(
+      diffMin /
+      60
+    );
+
+
+  if(diffHr < 24){
+    return `${diffHr} hr ago`;
+  }
+
+
+  const diffDay =
+    Math.round(
+      diffHr /
+      24
+    );
+
+
+  if(diffDay === 1){
+    return 'Yesterday';
+  }
+
+
+  if(diffDay < 7){
+    return `${diffDay} days ago`;
+  }
+
+
+  return new Date(ms)
+    .toLocaleDateString(
+      [],
+      {
+        month:'short',
+        day:'numeric'
+      }
+    );
+
+}
+
+
+
+/* =========================================================
+   HISTORY LIST
+   ========================================================= */
+
+function renderHistoryList(){
+
+  const list =
+    loadHistory(
+      currentLoginId
+    );
+
+
+  const panel =
+    document.getElementById(
+      'historyList'
+    );
+
+
+  if(list.length === 0){
+
+    panel.innerHTML = `
+      <div class="history-empty">
+        No saved conversations yet.<br>
+        Start asking VDart AI to build your history.
+      </div>
     `;
 
-    if(data.download_id){
-      lastReportDownload = {id: data.download_id, filename: data.download_filename || 'report.xlsx'};
-      genBtn.disabled = false;
-    }
-  }catch(err){
-    emptyEl.textContent = `Could not reach the server: ${err.message}`;
-  }finally{
-    btn.disabled = false;
+    return;
+
   }
+
+
+  panel.innerHTML =
+    list.map(
+      c => `
+
+        <div
+          class="
+            history-item
+            ${
+              c.id ===
+              currentConversationId
+                ? 'current'
+                : ''
+            }
+          "
+          data-id="${c.id}"
+          onclick="
+            loadConversation(
+              '${c.id}'
+            )
+          "
+        >
+
+          <div class="history-item-main">
+
+            <b>
+              ${escapeHtml(c.title)}
+            </b>
+
+            <span
+              title="
+                ${
+                  new Date(
+                    c.updatedAt
+                  ).toLocaleString()
+                }
+              "
+            >
+              ${relativeTime(c.updatedAt)}
+            </span>
+
+          </div>
+
+
+          <div class="history-item-actions">
+
+
+            <button
+              class="history-rename"
+              title="Rename conversation"
+              onclick="
+                renameConversation(
+                  '${c.id}',
+                  event
+                )
+              "
+            >
+              ✎
+            </button>
+
+
+            <button
+              class="history-delete"
+              title="Delete conversation"
+              onclick="
+                deleteConversation(
+                  '${c.id}',
+                  event
+                )
+              "
+            >
+              ×
+            </button>
+
+          </div>
+
+        </div>
+
+      `
+    ).join('');
+
 }
+
+
+
+/* =========================================================
+   HISTORY PANEL
+   ========================================================= */
+
+function toggleHistoryPanel(){
+
+  const panel =
+    document.getElementById(
+      'historyPanel'
+    );
+
+
+  const opening =
+    !panel
+      .classList
+      .contains('open');
+
+
+  if(opening){
+
+    renderHistoryList();
+
+  }
+
+
+  panel
+    .classList
+    .toggle('open');
+
+}
+
+
+
+function closeHistoryPanel(){
+
+  document
+    .getElementById('historyPanel')
+    .classList
+    .remove('open');
+
+}
+
+
+
+/* =========================================================
+   SIGN OUT
+   ========================================================= */
+
+function signOut(){
+
+  currentLoginId =
+    null;
+
+
+  localStorage.removeItem(
+    LOGIN_STORAGE_KEY
+  );
+
+
+  document
+    .getElementById('loginInput')
+    .value = '';
+
+
+  currentConversationId =
+    null;
+
+
+  currentMessages =
+    [];
+
+
+  closeHistoryPanel();
+
+
+  document
+    .getElementById('conversation')
+    .innerHTML =
+      emptyConversationHTML();
+
+
+  conversationHistory.length =
+    0;
+
+
+  document
+    .getElementById('topbarLogin')
+    .textContent =
+      'Not signed in';
+
+
+  document
+    .getElementById('topbarAvatar')
+    .textContent =
+      '?';
+
+
+  document
+    .getElementById('scopeLabel')
+    .textContent =
+      '—';
+
+
+  requireLogin();
+
+}
+
+
+
+/* =========================================================
+   BACKEND
+   ========================================================= */
+
+const conversationHistory = [];
+
+
+const MAX_HISTORY_TURNS = 4;
+
+
+requireLogin();
+
+
+
+async function askBackend(question){
+
+  const res =
+    await fetch(
+      '/api/ask',
+      {
+
+        method:'POST',
+
+        headers:{
+
+          'Content-Type':
+            'application/json',
+
+          'X-Login-Id':
+            currentLoginId
+
+        },
+
+        body:
+          JSON.stringify({
+
+            question,
+
+            history:
+              conversationHistory
+                .slice(
+                  -MAX_HISTORY_TURNS
+                )
+
+          })
+
+      }
+    );
+
+
+  if(res.status === 401){
+
+    currentLoginId =
+      null;
+
+
+    localStorage.removeItem(
+      LOGIN_STORAGE_KEY
+    );
+
+
+    requireLogin();
+
+
+    throw new Error(
+      'Your login was not recognized by the server. Please sign in again.'
+    );
+
+  }
+
+
+  const data =
+    await res.json();
+
+
+  if(!res.ok){
+
+    throw new Error(
+      data.answer ||
+      data.error ||
+      `Server returned ${res.status}`
+    );
+
+  }
+
+
+  return data;
+
+}
+
+
+
+/* =========================================================
+   CHAT WINDOW
+   ========================================================= */
+
+function toggleChat(){
+
+  const chat =
+    document.getElementById(
+      'chat'
+    );
+
+
+  chat
+    .classList
+    .toggle('open');
+
+
+  document
+    .getElementById(
+      'vdartAiLauncher'
+    )
+    .style
+    .display =
+      chat
+        .classList
+        .contains('open')
+        ? 'none'
+        : '';
+
+}
+
+
+
+function toggleExpand(){
+
+  document
+    .getElementById('chat')
+    .classList
+    .toggle('expanded');
+
+}
+
+
+
+function openChatTab(){
+
+  document
+    .getElementById('chat')
+    .classList
+    .add('open');
+
+
+  document
+    .getElementById(
+      'vdartAiLauncher'
+    )
+    .style
+    .display =
+      'none';
+
+}
+
+
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+
+function toast(msg){
+
+  const t =
+    document.getElementById(
+      'toast'
+    );
+
+
+  t.textContent =
+    msg;
+
+
+  t
+    .classList
+    .add('show');
+
+
+  setTimeout(
+    () =>
+      t
+        .classList
+        .remove('show'),
+    1800
+  );
+
+}
+
+
+
+/* =========================================================
+   NEW CHAT
+   ========================================================= */
+
+function newChat(){
+
+  startNewConversation();
+
+
+  document
+    .getElementById('conversation')
+    .innerHTML =
+      emptyConversationHTML();
+
+
+  conversationHistory.length =
+    0;
+
+
+  closeHistoryPanel();
+
+
+  setTimeout(
+    () => {
+
+      document
+        .getElementById('chatInput')
+        ?.focus();
+
+    },
+    50
+  );
+
+}
+
+
+
+/* =========================================================
+   QUICK ASK
+   ========================================================= */
+
+function quickAsk(q){
+
+  document
+    .getElementById('chatInput')
+    .value =
+      q;
+
+
+  sendMessage();
+
+}
+
+
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+function escapeHtml(s){
+
+  return String(
+    s ?? ''
+  ).replace(
+    /[&<>"']/g,
+    m => ({
+
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      '"':'&quot;',
+      "'":'&#039;'
+
+    }[m])
+  );
+
+}
+
+
+
+function formatTime(ms){
+
+  if(!ms){
+    return '';
+  }
+
+
+  return new Date(ms)
+    .toLocaleTimeString(
+      [],
+      {
+        hour:'numeric',
+        minute:'2-digit'
+      }
+    );
+
+}
+
+
+
+/* =========================================================
+   COPY ANSWER
+   ========================================================= */
+
+function copyAnswerText(btn){
+
+  const text =
+    btn.getAttribute(
+      'data-answer'
+    ) || '';
+
+
+  navigator.clipboard
+    .writeText(text)
+    .then(
+      () => {
+
+        const original =
+          btn.textContent;
+
+
+        btn.textContent =
+          'Copied ✓';
+
+
+        btn.disabled =
+          true;
+
+
+        setTimeout(
+          () => {
+
+            btn.textContent =
+              original;
+
+
+            btn.disabled =
+              false;
+
+          },
+          1300
+        );
+
+      }
+    )
+    .catch(
+      () => {
+
+        toast(
+          'Could not copy to clipboard'
+        );
+
+      }
+    );
+
+}
+
+
+
+/* =========================================================
+   SEND MESSAGE
+   ========================================================= */
+
+async function sendMessage(){
+
+  if(!currentLoginId){
+
+    requireLogin();
+
+    return;
+
+  }
+
+
+  const input =
+    document.getElementById(
+      'chatInput'
+    );
+
+
+  let q =
+    input.value.trim();
+
+
+  if(!q){
+    return;
+  }
+
+
+  const buMode =
+    document
+      .getElementById(
+        'buBreakdownToggle'
+      )
+      .checked;
+
+
+  if(
+    buMode &&
+    !/\bbu\b|business unit/i
+      .test(q)
+  ){
+
+    q =
+      q.replace(
+        /[?.!]+$/,
+        ''
+      ) +
+      ', broken down by BU';
+
+  }
+
+
+  openChatTab();
+
+
+  if(!currentConversationId){
+
+    startNewConversation();
+
+  }
+
+
+  const conv =
+    document.getElementById(
+      'conversation'
+    );
+
+
+  const userTime =
+    Date.now();
+
+
+  conv.insertAdjacentHTML(
+    'beforeend',
+    `
+      <div class="message user">
+
+        ${escapeHtml(q)}
+
+        <div class="msg-time">
+          ${formatTime(userTime)}
+        </div>
+
+      </div>
+    `
+  );
+
+
+  currentMessages.push({
+
+    type:'user',
+
+    text:q,
+
+    time:userTime
+
+  });
+
+
+  input.value =
+    '';
+
+
+  document
+    .getElementById(
+      'sendBtn'
+    )
+    .disabled =
+      true;
+
+
+  conv.insertAdjacentHTML(
+    'beforeend',
+    `
+      <div
+        id="thinking"
+        class="message bot thinking"
+      >
+
+        <span class="dot"></span>
+
+        <span class="dot"></span>
+
+        <span class="dot"></span>
+
+      </div>
+    `
+  );
+
+
+  const panel =
+    document.getElementById(
+      'chatPanel'
+    );
+
+
+  panel.scrollTop =
+    panel.scrollHeight;
+
+
+  try{
+
+    const data =
+      await askBackend(q);
+
+
+    document
+      .getElementById(
+        'thinking'
+      )
+      ?.remove();
+
+
+    const botTime =
+      Date.now();
+
+
+    renderAnswer(
+      q,
+      data,
+      botTime
+    );
+
+
+    if(
+      !data.blocked &&
+      !data.error
+    ){
+
+      conversationHistory.push({
+
+        question:q,
+
+        answer:
+          data.answer || ''
+
+      });
+
+    }
+
+
+    currentMessages.push({
+
+      type:'bot',
+
+      question:q,
+
+      data,
+
+      time:botTime
+
+    });
+
+
+    persistCurrentConversation();
+
+  }catch(err){
+
+    document
+      .getElementById(
+        'thinking'
+      )
+      ?.remove();
+
+
+    const botTime =
+      Date.now();
+
+
+    const errorData = {
+
+      error:true,
+
+      answer:
+        `Could not reach the server: ${err.message}`
+
+    };
+
+
+    renderAnswer(
+      q,
+      errorData,
+      botTime
+    );
+
+
+    currentMessages.push({
+
+      type:'bot',
+
+      question:q,
+
+      data:errorData,
+
+      time:botTime
+
+    });
+
+
+    persistCurrentConversation();
+
+  }finally{
+
+    document
+      .getElementById(
+        'sendBtn'
+      )
+      .disabled =
+        false;
+
+
+    panel.scrollTop =
+      panel.scrollHeight;
+
+  }
+
+}
+
+
+
+/* =========================================================
+   RENDER ANSWER
+   ========================================================= */
+
+function renderAnswer(
+  question,
+  data,
+  time
+){
+
+  const conv =
+    document.getElementById(
+      'conversation'
+    );
+
+
+  const rawAnswer =
+    data.answer ||
+    'No answer returned.';
+
+
+  const answerHtml =
+    (
+      typeof marked !==
+      'undefined'
+    )
+      ? marked.parse(
+          rawAnswer
+        )
+      : escapeHtml(
+          rawAnswer
+        );
+
+
+  const stateClass =
+    data.blocked
+      ? 'blocked'
+      : (
+          data.error
+            ? 'error'
+            : ''
+        );
+
+
+  let chips =
+    '';
+
+
+  if(data.blocked){
+
+    chips += `
+      <span class="chip blocked">
+        Blocked
+      </span>
+    `;
+
+  }
+
+
+  if(data.error){
+
+    chips += `
+      <span class="chip blocked">
+        Error
+      </span>
+    `;
+
+  }
+
+
+  if(data.is_general_knowledge){
+
+    chips += `
+      <span class="chip">
+        General knowledge
+      </span>
+    `;
+
+  }
+
+
+  if(data.is_insight){
+
+    chips += `
+      <span class="chip">
+        Analysis
+      </span>
+    `;
+
+  }
+
+
+  if(data.row_count){
+
+    chips += `
+      <span class="chip">
+        ${data.row_count}
+        row${
+          data.row_count === 1
+            ? ''
+            : 's'
+        }
+      </span>
+    `;
+
+  }
+
+
+
+  let followupChips =
+    '';
+
+
+  if(
+    Array.isArray(
+      data.suggested_followups
+    )
+  ){
+
+    for(
+      const followup
+      of data.suggested_followups
+    ){
+
+      const safe =
+        escapeHtml(
+          followup
+        ).replace(
+          /'/g,
+          '&#39;'
+        );
+
+
+      followupChips += `
+        <button
+          class="mini"
+          onclick="
+            quickAsk(
+              '${safe}'
+            )
+          "
+        >
+          ${escapeHtml(followup)}
+        </button>
+      `;
+
+    }
+
+  }
+
+
+
+  let downloadAction =
+    '';
+
+
+  if(data.download_id){
+
+    const downloadFilename =
+      (
+        data.download_filename ||
+        'results.xlsx'
+      ).replace(
+        /'/g,
+        ''
+      );
+
+
+    downloadAction += `
+      <button
+        class="mini primary"
+        onclick="
+          downloadAnswerFile(
+            '${data.download_id}',
+            '${downloadFilename}'
+          )
+        "
+      >
+        Excel ↓
+      </button>
+    `;
+
+  }
+
+
+  if(data.pdf_download_id){
+
+    const pdfFilename =
+      (
+        data.pdf_download_filename ||
+        'results.pdf'
+      ).replace(
+        /'/g,
+        ''
+      );
+
+
+    downloadAction += `
+      <button
+        class="mini"
+        onclick="
+          downloadAnswerFile(
+            '${data.pdf_download_id}',
+            '${pdfFilename}'
+          )
+        "
+      >
+        PDF ↓
+      </button>
+    `;
+
+  }
+
+
+
+  let retryAction =
+    '';
+
+
+  if(
+    data.blocked ||
+    data.error
+  ){
+
+    retryAction = `
+      <button
+        class="mini"
+        data-q="${escapeHtml(question)}"
+        onclick="
+          quickAsk(
+            this.getAttribute(
+              'data-q'
+            )
+          )
+        "
+      >
+        Retry
+      </button>
+    `;
+
+  }
+
+
+
+  let copyAction =
+    '';
+
+
+  if(
+    !data.blocked &&
+    !data.error &&
+    data.answer
+  ){
+
+    copyAction = `
+      <button
+        class="mini"
+        data-answer="${escapeHtml(data.answer)}"
+        onclick="
+          copyAnswerText(this)
+        "
+      >
+        Copy
+      </button>
+    `;
+
+  }
+
+
+
+  const timeHtml =
+    time
+      ? `
+          <div class="msg-time">
+            ${formatTime(time)}
+          </div>
+        `
+      : '';
+
+
+
+  conv.insertAdjacentHTML(
+    'beforeend',
+    `
+      <div class="message bot ${stateClass}">
+
+        ${answerHtml}
+
+        ${
+          chips
+            ? `
+              <div class="badge-row">
+                ${chips}
+              </div>
+            `
+            : ''
+        }
+
+        ${
+          (
+            retryAction ||
+            copyAction ||
+            followupChips
+          )
+            ? `
+              <div class="actions">
+                ${retryAction}
+                ${copyAction}
+                ${followupChips}
+              </div>
+            `
+            : ''
+        }
+
+        ${
+          downloadAction
+            ? `
+              <div class="actions">
+                ${downloadAction}
+              </div>
+            `
+            : ''
+        }
+
+        ${timeHtml}
+
+      </div>
+    `
+  );
+
+}
+
+
+
+/* =========================================================
+   DOWNLOAD
+   ========================================================= */
+
+function downloadAnswerFile(
+  downloadId,
+  filename
+){
+
+  window.location.href =
+    `/api/download/${downloadId}?filename=${encodeURIComponent(filename)}`;
+
+}
+
+
+
+/* =========================================================
+   SAMPLE TABLE SELECTION
+   ========================================================= */
+
+function toggleAll(el){
+
+  document
+    .querySelectorAll(
+      '.rowcheck'
+    )
+    .forEach(
+      c =>
+        c.checked =
+          el.checked
+    );
+
+
+  selectionChanged();
+
+}
+
+
+
+function clearSelection(){
+
+  document
+    .querySelectorAll(
+      '.rowcheck'
+    )
+    .forEach(
+      c =>
+        c.checked =
+          false
+    );
+
+
+  document
+    .getElementById(
+      'selectAll'
+    )
+    .checked =
+      false;
+
+
+  selectionChanged();
+
+}
+
+
+
+function selectionChanged(){
+
+  const n =
+    [
+      ...document
+        .querySelectorAll(
+          '.rowcheck'
+        )
+    ].filter(
+      c =>
+        c.checked
+    ).length;
+
+
+  document
+    .getElementById(
+      'selectionBar'
+    )
+    .classList
+    .toggle(
+      'show',
+      n > 0
+    );
+
+
+  document
+    .getElementById(
+      'selectionText'
+    )
+    .textContent =
+      `${n} candidate${
+        n === 1
+          ? ''
+          : 's'
+      } selected`;
+
+}
+
+
+
+function askSelection(){
+
+  const rows =
+    [
+      ...document
+        .querySelectorAll(
+          '.rowcheck'
+        )
+    ]
+      .filter(
+        c =>
+          c.checked
+      )
+      .map(
+        c =>
+          c
+            .closest('tr')
+            .children[1]
+            .textContent
+            .trim()
+      );
+
+
+  if(rows.length === 0){
+    return;
+  }
+
+
+  document
+    .getElementById('chat')
+    .classList
+    .add('open');
+
+
+  document
+    .getElementById(
+      'vdartAiLauncher'
+    )
+    .style
+    .display =
+      'none';
+
+
+  quickAsk(
+    `Give me details on these candidates: ${rows.join(', ')}`
+  );
+
+}
+
+
+
+/* =========================================================
+   REPORT BUILDER
+   ========================================================= */
+
+let lastReportDownload =
+  null;
+
+
+
+function composeReportQuestion(){
+
+  const groupBy =
+    document
+      .getElementById(
+        'reportGroupBy'
+      )
+      .value;
+
+
+  const filter =
+    document
+      .getElementById(
+        'reportFilter'
+      )
+      .value
+      .trim();
+
+
+  let q =
+    `How many candidates does each ${groupBy} have`;
+
+
+  if(filter){
+
+    q +=
+      `, filtered to ${filter}`;
+
+  }
+
+
+  return q + '?';
+
+}
+
+
+
+/* =========================================================
+   REPORT PREVIEW
+   ========================================================= */
+
+async function refreshReportPreview(){
+
+  if(!currentLoginId){
+
+    requireLogin();
+
+    return;
+
+  }
+
+
+  const btn =
+    document.getElementById(
+      'refreshPreviewBtn'
+    );
+
+
+  const emptyEl =
+    document.getElementById(
+      'reportPreviewEmpty'
+    );
+
+
+  const tableEl =
+    document.getElementById(
+      'reportPreviewTable'
+    );
+
+
+  const headEl =
+    document.getElementById(
+      'reportPreviewHead'
+    );
+
+
+  const bodyEl =
+    document.getElementById(
+      'reportPreviewBody'
+    );
+
+
+  const genBtn =
+    document.getElementById(
+      'generateExcelBtn'
+    );
+
+
+  btn.disabled =
+    true;
+
+
+  emptyEl.style.display =
+    'block';
+
+
+  emptyEl.textContent =
+    'Running report…';
+
+
+  tableEl.style.display =
+    'none';
+
+
+  genBtn.disabled =
+    true;
+
+
+  lastReportDownload =
+    null;
+
+
+  try{
+
+    const question =
+      composeReportQuestion();
+
+
+    const data =
+      await askBackend(
+        question
+      );
+
+
+    if(
+      data.blocked ||
+      data.error
+    ){
+
+      emptyEl.textContent =
+        data.answer ||
+        data.error ||
+        'This request was blocked.';
+
+      return;
+
+    }
+
+
+    if(
+      data.preview_columns &&
+      data.preview_rows &&
+      data.preview_rows.length
+    ){
+
+      headEl.innerHTML =
+        '<tr>' +
+        data.preview_columns
+          .map(
+            c =>
+              `<th>${escapeHtml(c)}</th>`
+          )
+          .join('') +
+        '</tr>';
+
+
+      bodyEl.innerHTML =
+        data.preview_rows
+          .map(
+            row =>
+              '<tr>' +
+              row
+                .map(
+                  v =>
+                    `<td>${escapeHtml(String(v ?? ''))}</td>`
+                )
+                .join('') +
+              '</tr>'
+          )
+          .join('');
+
+
+      tableEl.style.display =
+        '';
+
+
+      emptyEl.style.display =
+        'none';
+
+    }else{
+
+      emptyEl.textContent =
+        'This question returned a single value rather than a table.';
+
+    }
+
+
+    document
+      .getElementById(
+        'reportPreviewSide'
+      )
+      .innerHTML = `
+
+        <div class="report-line">
+
+          <span>
+            Question
+          </span>
+
+          <b>
+            ${escapeHtml(question)}
+          </b>
+
+        </div>
+
+        <div class="report-line">
+
+          <span>
+            Rows
+          </span>
+
+          <b>
+            ${data.row_count || 0}
+          </b>
+
+        </div>
+
+      `;
+
+
+    if(data.download_id){
+
+      lastReportDownload = {
+
+        id:
+          data.download_id,
+
+        filename:
+          data.download_filename ||
+          'report.xlsx'
+
+      };
+
+
+      genBtn.disabled =
+        false;
+
+    }
+
+  }catch(err){
+
+    emptyEl.textContent =
+      `Could not reach the server: ${err.message}`;
+
+  }finally{
+
+    btn.disabled =
+      false;
+
+  }
+
+}
+
+
+
+/* =========================================================
+   REPORT DOWNLOAD
+   ========================================================= */
 
 function downloadCurrentReport(){
-  if(!lastReportDownload) return;
-  downloadAnswerFile(lastReportDownload.id, lastReportDownload.filename);
+
+  if(!lastReportDownload){
+    return;
+  }
+
+
+  downloadAnswerFile(
+    lastReportDownload.id,
+    lastReportDownload.filename
+  );
+
 }
 
-function openReportBuilder(){document.getElementById('reportModal').classList.add('open')}
-function closeReportBuilder(){document.getElementById('reportModal').classList.remove('open')}
 
-document.addEventListener('keydown',e=>{
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();document.getElementById('chat').classList.add('open');setTimeout(()=>document.getElementById('chatInput').focus(),50)}
-  if(e.key==='Escape'){document.getElementById('reportModal').classList.remove('open')}
-});
+
+/* =========================================================
+   MODAL
+   ========================================================= */
+
+function openReportBuilder(){
+
+  document
+    .getElementById(
+      'reportModal'
+    )
+    .classList
+    .add('open');
+
+}
+
+
+
+function closeReportBuilder(){
+
+  document
+    .getElementById(
+      'reportModal'
+    )
+    .classList
+    .remove('open');
+
+}
+
+
+
+/* =========================================================
+   KEYBOARD
+   ========================================================= */
+
+document.addEventListener(
+  'keydown',
+  e => {
+
+    if(
+      (
+        e.ctrlKey ||
+        e.metaKey
+      ) &&
+      e.key
+        .toLowerCase() ===
+        'k'
+    ){
+
+      e.preventDefault();
+
+
+      document
+        .getElementById(
+          'chat'
+        )
+        .classList
+        .add('open');
+
+
+      document
+        .getElementById(
+          'vdartAiLauncher'
+        )
+        .style
+        .display =
+          'none';
+
+
+      setTimeout(
+        () =>
+          document
+            .getElementById(
+              'chatInput'
+            )
+            .focus(),
+        50
+      );
+
+    }
+
+
+    if(e.key === 'Escape'){
+
+      document
+        .getElementById(
+          'reportModal'
+        )
+        .classList
+        .remove('open');
+
+
+      closeHistoryPanel();
+
+    }
+
+  }
+);
+
 </script>
+
 </body>
 </html>
