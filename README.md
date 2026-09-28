@@ -5,7 +5,7 @@ question -> LLM writes SQL -> SQL is safety-checked -> runs against the
 masked view (`candidates_masked`) using a restricted, read-only database
 user -> LLM phrases the result as a plain-English answer.
 
-Uses **Groq (Llama 3.3)** first since it's free/cheap for testing, and
+
 falls back to **OpenAI** automatically only if Groq fails or produces an
 unsafe/invalid query.
 
@@ -29,8 +29,7 @@ unsafe/invalid query.
 3. **Set up your environment file:**
    - Copy `.env.example` to a new file named `.env`
    - Fill in your real values:
-     - `DB_PASSWORD` -- the password you set for `app_readonly`
-     - `GROQ_API_KEY` -- from https://console.groq.com
+     - `DB_PASSWORD` -- the password you set for `app_readonly
      - `OPENAI_API_KEY` -- optional but recommended as fallback
 
    **Never commit or share your real `.env` file.**
